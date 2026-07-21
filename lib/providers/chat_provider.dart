@@ -58,6 +58,16 @@ class ChatProvider extends ChangeNotifier {
 
   /// Load a specific conversation
   Future<void> loadConversation(Conversation conversation) async {
+    if (_currentConversation?.id == conversation.id) return;
+
+    // Cleanup current if empty
+    if (_currentConversation != null && _messages.isEmpty && !_isSending && !_isLoading) {
+      try {
+        await _apiService.deleteConversation(_currentConversation!.id);
+        _conversations.removeWhere((c) => c.id == _currentConversation!.id);
+      } catch (_) {}
+    }
+
     _currentConversation = conversation;
     _isLoading = true;
     _errorMessage = null;
@@ -230,6 +240,10 @@ class ChatProvider extends ChangeNotifier {
 
   /// Clear chat history (for switching spaces)
   void clearChat() {
+    if (_currentConversation != null && _messages.isEmpty && !_isSending && !_isLoading) {
+      _apiService.deleteConversation(_currentConversation!.id).catchError((_) {});
+    }
+
     _messages = [];
     _conversations = [];
     _currentConversation = null;
