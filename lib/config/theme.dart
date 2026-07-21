@@ -9,35 +9,35 @@ import 'package:google_fonts/google_fonts.dart';
 class SourcelyColors {
   SourcelyColors._();
 
-  // Primary palette (Sage Green)
-  static const Color primary = Color(0xFF778873);
-  static const Color secondary = Color(0xFFA1BC98);
-  static const Color tertiary = Color(0xFFDCCFC0);
-  static const Color backgroundLight = Color(0xFFFDF6ED);
+  // Primary palette (Vibrant Teal)
+  static const Color primary = Color(0xFF14B8A6);
+  static const Color secondary = Color(0xFF0F766E);
+  static const Color tertiary = Color(0xFFCCFBF1);
+  static const Color backgroundLight = Color(0xFFFFFFFF);
 
   // Status
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFE53935);
-  static const Color processing = Color(0xFF778873);
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444);
+  static const Color processing = Color(0xFF14B8A6);
 
   // Common Text
-  static const Color textLightPrimary = Color(0xFF2C332B);
-  static const Color textLightSecondary = Color(0xFF5A6658);
-  static const Color textLightMuted = Color(0xFF8A9988);
+  static const Color textLightPrimary = Color(0xFF27272A);
+  static const Color textLightSecondary = Color(0xFF52525B);
+  static const Color textLightMuted = Color(0xFFA1A1AA);
 
-  static const Color textDarkPrimary = Color(0xFFE8EBE7);
-  static const Color textDarkSecondary = Color(0xFFB5BEB4);
-  static const Color textDarkMuted = Color(0xFF8A9988);
+  static const Color textDarkPrimary = Color(0xFFE4E4E7);
+  static const Color textDarkSecondary = Color(0xFFA1A1AA);
+  static const Color textDarkMuted = Color(0xFF71717A);
 
   // Backgrounds & Surfaces
-  static const Color backgroundDark = Color(0xFF1E211D);
-  static const Color surfaceDark = Color(0xFF262A25);
-  static const Color surfaceLight = Colors.white;
+  static const Color backgroundDark = Color(0xFF121212);
+  static const Color surfaceDark = Color(0xFF1E1E1E);
+  static const Color surfaceLight = Color(0xFFFAFAFA);
 
   // Borders
-  static const Color borderLight = Color(0xFFDCCFC0);
-  static const Color borderDark = Color(0xFF3B413A);
+  static const Color borderLight = Color(0xFFE4E4E7);
+  static const Color borderDark = Color(0xFF27272A);
 }
 
 /// App theme builder

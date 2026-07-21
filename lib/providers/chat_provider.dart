@@ -100,6 +100,49 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  /// Update a conversation's name
+  Future<bool> updateConversationName(String id, String newName) async {
+    try {
+      final updatedConvo = await _apiService.updateConversation(id, newName);
+      final index = _conversations.indexWhere((c) => c.id == id);
+      if (index >= 0) {
+        _conversations[index] = updatedConvo;
+        if (_currentConversation?.id == id) {
+          _currentConversation = updatedConvo;
+        }
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to rename conversation';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Delete a conversation
+  Future<bool> deleteConversation(String id) async {
+    try {
+      await _apiService.deleteConversation(id);
+      _conversations.removeWhere((c) => c.id == id);
+      
+      if (_currentConversation?.id == id) {
+        _currentConversation = null;
+        _messages = [];
+        if (_conversations.isNotEmpty) {
+          await loadConversation(_conversations.first);
+        }
+      } else {
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to delete conversation';
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Send a message to the agent
   Future<bool> sendMessage(String message) async {
     if (_currentSpaceId == null) return false;

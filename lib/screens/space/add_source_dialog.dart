@@ -105,43 +105,17 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
           ),
           const SizedBox(height: 20),
 
-          // Source type selector
-          Row(
-            children: [
-              _TypeChip(
-                label: '🌐 Website',
-                isSelected: _sourceType == 'url',
-                onTap: () => setState(() => _sourceType = 'url'),
-              ),
-              const SizedBox(width: 8),
-              _TypeChip(
-                label: '▶️ YouTube',
-                isSelected: _sourceType == 'youtube',
-                onTap: () => setState(() => _sourceType = 'youtube'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
           // URL input
           TextField(
             controller: _urlController,
-            decoration: InputDecoration(
-              hintText: _sourceType == 'youtube'
-                  ? 'https://youtube.com/watch?v=...'
-                  : 'https://example.com/article',
+            decoration: const InputDecoration(
+              hintText: 'https://example.com/article or YouTube link',
               prefixIcon: Icon(
-                _sourceType == 'youtube' ? Icons.play_circle : Icons.link,
+                Icons.link,
                 color: SourcelyColors.textLightMuted,
               ),
             ),
             style: Theme.of(context).textTheme.bodyLarge,
-            onChanged: (value) {
-              // Auto-detect YouTube URLs
-              if (_isYouTubeUrl(value) && _sourceType != 'youtube') {
-                setState(() => _sourceType = 'youtube');
-              }
-            },
           ),
           const SizedBox(height: 12),
 

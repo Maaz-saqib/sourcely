@@ -34,7 +34,6 @@ async def create_knowledge_space(
         "name": body.name,
         "emoji": body.emoji,
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
     result = supabase.table("knowledge_spaces").insert(data).execute()

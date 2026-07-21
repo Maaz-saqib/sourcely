@@ -102,6 +102,88 @@ class _ChatScreenState extends State<ChatScreen> {
                     onPressed: () => provider.createNewConversation(),
                     tooltip: 'New Conversation',
                   ),
+                  if (provider.currentConversation != null)
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: SourcelyColors.textLightMuted),
+                      onSelected: (value) async {
+                        final convo = provider.currentConversation!;
+                        if (value == 'rename') {
+                          final newName = await showDialog<String>(
+                            context: context,
+                            builder: (context) {
+                              final controller = TextEditingController(text: convo.name);
+                              return AlertDialog(
+                                title: const Text('Rename Conversation'),
+                                content: TextField(
+                                  controller: controller,
+                                  autofocus: true,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Conversation name',
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context, controller.text.trim()),
+                                    child: const Text('Rename'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                          if (newName != null && newName.isNotEmpty && newName != convo.name) {
+                            await provider.updateConversationName(convo.id, newName);
+                          }
+                        } else if (value == 'delete') {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Delete Conversation?'),
+                              content: const Text('Are you sure you want to delete this conversation? This cannot be undone.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: ElevatedButton.styleFrom(backgroundColor: SourcelyColors.error),
+                                  child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await provider.deleteConversation(convo.id);
+                          }
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'rename',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 18),
+                              SizedBox(width: 8),
+                              Text('Rename'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 18, color: SourcelyColors.error),
+                              SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: SourcelyColors.error)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             );

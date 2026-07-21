@@ -64,8 +64,13 @@ def _load_youtube(url: str):
         loader = YoutubeLoader.from_youtube_url(url, add_video_info=False)
         return loader.load()
     except Exception as e:
-        # Catch common "no element found" ParseError from youtube_transcript_api
-        raise ValueError("YouTube blocked the transcript request or subtitles are unavailable for this video.")
+        print(f"Transcript extraction failed ({str(e)}), falling back to web scraper...")
+        # Fallback: scrape the page description/metadata instead of crashing
+        docs = _load_url(url)
+        if docs:
+            # Prepend a warning so the LLM knows it's a fallback
+            docs[0].page_content = "Note: YouTube transcript was unavailable. Ingested video metadata/description instead.\n\n" + docs[0].page_content
+        return docs
 
 
 def _load_url(url: str):
