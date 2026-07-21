@@ -28,13 +28,18 @@ async def verify_jwt(
             token,
             settings.supabase_jwt_secret,
             algorithms=["HS256"],
-            audience="authenticated",
+            options={"verify_aud": False},
         )
         return payload
     except jwt.ExpiredSignatureError:
+        print("JWT EXPIRED")
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError as e:
+        print(f"JWT INVALID: {str(e)}")
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    except Exception as e:
+        print(f"JWT UNKNOWN ERROR: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Auth error: {str(e)}")
 
 
 def get_user_id(payload: dict = Depends(verify_jwt)) -> str:
