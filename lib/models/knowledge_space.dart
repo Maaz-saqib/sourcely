@@ -43,4 +43,24 @@ class KnowledgeSpace {
       'source_count': sourceCount,
     };
   }
+
+  KnowledgeSpace copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? emoji,
+    String? createdAt,
+    String? updatedAt,
+    int? sourceCount,
+  }) {
+    return KnowledgeSpace(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      emoji: emoji ?? this.emoji,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      sourceCount: sourceCount ?? this.sourceCount,
+    );
+  }
 }

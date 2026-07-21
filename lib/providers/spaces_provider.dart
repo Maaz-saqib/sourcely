@@ -134,6 +134,7 @@ class SpacesProvider extends ChangeNotifier {
         originalName: originalName,
       );
       _currentSources.insert(0, source);
+      _updateSourceCount(1);
       notifyListeners();
       return source;
     } on ApiException catch (e) {
@@ -163,6 +164,7 @@ class SpacesProvider extends ChangeNotifier {
         mimeType: mimeType,
       );
       _currentSources.insert(0, source);
+      _updateSourceCount(1);
       notifyListeners();
       return source;
     } on ApiException catch (e) {
@@ -205,6 +207,7 @@ class SpacesProvider extends ChangeNotifier {
     try {
       await _apiService.deleteSource(sourceId);
       _currentSources.removeWhere((s) => s.id == sourceId);
+      _updateSourceCount(-1);
       notifyListeners();
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -212,6 +215,18 @@ class SpacesProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Failed to delete source';
       notifyListeners();
+    }
+  }
+
+  void _updateSourceCount(int delta) {
+    if (_currentSpace != null) {
+      final newCount = (_currentSpace!.sourceCount + delta).clamp(0, 9999);
+      _currentSpace = _currentSpace!.copyWith(sourceCount: newCount);
+      
+      final index = _spaces.indexWhere((s) => s.id == _currentSpace!.id);
+      if (index >= 0) {
+        _spaces[index] = _currentSpace!;
+      }
     }
   }
 
