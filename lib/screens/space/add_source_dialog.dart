@@ -1,0 +1,245 @@
+/// Add Source Dialog for Sourcely.
+/// Bottom sheet dialog for adding URL or YouTube sources.
+library;
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../config/theme.dart';
+import '../../providers/spaces_provider.dart';
+
+class AddSourceDialog extends StatefulWidget {
+  const AddSourceDialog({super.key});
+
+  @override
+  State<AddSourceDialog> createState() => _AddSourceDialogState();
+}
+
+class _AddSourceDialogState extends State<AddSourceDialog> {
+  final _urlController = TextEditingController();
+  final _nameController = TextEditingController();
+  String _sourceType = 'url';
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  bool _isYouTubeUrl(String url) {
+    return url.contains('youtube.com') ||
+        url.contains('youtu.be') ||
+        url.contains('youtube.com/watch');
+  }
+
+  Future<void> _handleSubmit() async {
+    if (_urlController.text.trim().isEmpty) return;
+
+    setState(() => _isLoading = true);
+
+    final url = _urlController.text.trim();
+    final type = _isYouTubeUrl(url) ? 'youtube' : _sourceType;
+
+    final source = await context.read<SpacesProvider>().addLinkSource(
+          sourceType: type,
+          sourceUrl: url,
+          originalName:
+              _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : null,
+        );
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (source != null) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Source added! Ingestion started...'),
+            backgroundColor: SourcelyColors.success,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: SourcelyColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: SourcelyColors.textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Title
+          Text(
+            'Add Source Link',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Paste a YouTube video or website URL',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 20),
+
+          // Source type selector
+          Row(
+            children: [
+              _TypeChip(
+                label: '🌐 Website',
+                isSelected: _sourceType == 'url',
+                onTap: () => setState(() => _sourceType = 'url'),
+              ),
+              const SizedBox(width: 8),
+              _TypeChip(
+                label: '▶️ YouTube',
+                isSelected: _sourceType == 'youtube',
+                onTap: () => setState(() => _sourceType = 'youtube'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // URL input
+          TextField(
+            controller: _urlController,
+            decoration: InputDecoration(
+              hintText: _sourceType == 'youtube'
+                  ? 'https://youtube.com/watch?v=...'
+                  : 'https://example.com/article',
+              prefixIcon: Icon(
+                _sourceType == 'youtube' ? Icons.play_circle : Icons.link,
+                color: SourcelyColors.textMuted,
+              ),
+            ),
+            style: Theme.of(context).textTheme.bodyLarge,
+            onChanged: (value) {
+              // Auto-detect YouTube URLs
+              if (_isYouTubeUrl(value) && _sourceType != 'youtube') {
+                setState(() => _sourceType = 'youtube');
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Optional name
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              hintText: 'Display name (optional)',
+              prefixIcon: Icon(Icons.label_outline, color: SourcelyColors.textMuted),
+            ),
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 24),
+
+          // Submit button
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: SourcelyColors.primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _handleSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Add Source',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TypeChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? SourcelyColors.primary.withValues(alpha: 0.15)
+              : SourcelyColors.surfaceLight,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? SourcelyColors.primary.withValues(alpha: 0.5)
+                : SourcelyColors.glassBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? SourcelyColors.primaryLight
+                : SourcelyColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
