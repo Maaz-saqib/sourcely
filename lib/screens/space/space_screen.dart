@@ -81,20 +81,22 @@ class _SpaceScreenState extends State<SpaceScreen>
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc'],
         withData: true,
+        allowMultiple: true,
       );
 
       if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        if (file.bytes != null && mounted) {
-          final mimeType = file.extension == 'pdf'
-              ? 'application/pdf'
-              : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        for (final file in result.files) {
+          if (file.bytes != null && mounted) {
+            final mimeType = file.extension == 'pdf'
+                ? 'application/pdf'
+                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-          await context.read<SpacesProvider>().uploadFileSource(
-                fileName: file.name,
-                fileBytes: file.bytes!,
-                mimeType: mimeType,
-              );
+            await context.read<SpacesProvider>().uploadFileSource(
+                  fileName: file.name,
+                  fileBytes: file.bytes!,
+                  mimeType: mimeType,
+                );
+          }
         }
       }
     } catch (e) {

@@ -61,7 +61,8 @@ def _load_youtube(url: str):
     """Load YouTube transcript using YoutubeLoader."""
     from langchain_community.document_loaders import YoutubeLoader
 
-    loader = YoutubeLoader.from_youtube_url(url, add_video_info=True)
+    # add_video_info=False bypasses pytube which is currently broken on YouTube
+    loader = YoutubeLoader.from_youtube_url(url, add_video_info=False)
     return loader.load()
 
 
