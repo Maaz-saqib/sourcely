@@ -37,7 +37,7 @@ class ChatBubble extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                gradient: SourcelyColors.primaryGradient,
+                gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Center(
@@ -68,7 +68,7 @@ class ChatBubble extends StatelessWidget {
                 border: Border.all(
                   color: isUser
                       ? SourcelyColors.primary.withValues(alpha: 0.3)
-                      : SourcelyColors.glassBorder,
+                      : SourcelyColors.borderLight,
                 ),
               ),
               child: Column(
@@ -78,7 +78,7 @@ class ChatBubble extends StatelessWidget {
                   SelectableText(
                     message.content,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: SourcelyColors.textPrimary,
+                          color: SourcelyColors.textLightPrimary,
                           height: 1.5,
                         ),
                   ),
@@ -92,12 +92,12 @@ class ChatBubble extends StatelessWidget {
                   // Citations
                   if (message.hasCitations) ...[
                     const SizedBox(height: 10),
-                    const Divider(color: SourcelyColors.glassBorder, height: 1),
+                    const Divider(color: SourcelyColors.borderLight, height: 1),
                     const SizedBox(height: 8),
                     Text(
                       'Sources',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: SourcelyColors.textMuted,
+                            color: SourcelyColors.textLightMuted,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -124,10 +124,10 @@ class ChatBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: SourcelyColors.surfaceLight,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: SourcelyColors.glassBorder),
+                border: Border.all(color: SourcelyColors.borderLight),
               ),
               child: const Center(
-                child: Icon(Icons.person, size: 18, color: SourcelyColors.textSecondary),
+                child: Icon(Icons.person, size: 18, color: SourcelyColors.textLightSecondary),
               ),
             ),
           ],

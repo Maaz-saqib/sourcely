@@ -66,9 +66,9 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: SourcelyColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         left: 24,
@@ -86,7 +86,7 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: SourcelyColors.textMuted,
+                color: SourcelyColors.textLightMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -132,7 +132,7 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
                   : 'https://example.com/article',
               prefixIcon: Icon(
                 _sourceType == 'youtube' ? Icons.play_circle : Icons.link,
-                color: SourcelyColors.textMuted,
+                color: SourcelyColors.textLightMuted,
               ),
             ),
             style: Theme.of(context).textTheme.bodyLarge,
@@ -150,7 +150,7 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
             controller: _nameController,
             decoration: const InputDecoration(
               hintText: 'Display name (optional)',
-              prefixIcon: Icon(Icons.label_outline, color: SourcelyColors.textMuted),
+              prefixIcon: Icon(Icons.label_outline, color: SourcelyColors.textLightMuted),
             ),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
@@ -162,7 +162,7 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
             height: 50,
             child: Container(
               decoration: BoxDecoration(
-                gradient: SourcelyColors.primaryGradient,
+                gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ElevatedButton(
@@ -226,15 +226,15 @@ class _TypeChip extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? SourcelyColors.primary.withValues(alpha: 0.5)
-                : SourcelyColors.glassBorder,
+                : SourcelyColors.borderLight,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             color: isSelected
-                ? SourcelyColors.primaryLight
-                : SourcelyColors.textSecondary,
+                ? SourcelyColors.secondary
+                : SourcelyColors.textLightSecondary,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             fontSize: 13,
           ),

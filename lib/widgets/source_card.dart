@@ -36,7 +36,7 @@ class _SourceCardState extends State<SourceCard> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: glassCardDecoration(),
+      decoration: minimalCardDecoration(context),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -55,7 +55,7 @@ class _SourceCardState extends State<SourceCard> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        gradient: SourcelyColors.primaryGradient,
+                        gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(
@@ -82,7 +82,7 @@ class _SourceCardState extends State<SourceCard> {
                           Text(
                             source.type.toUpperCase(),
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: SourcelyColors.primaryLight,
+                                  color: SourcelyColors.secondary,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 1,
                                 ),
@@ -175,7 +175,7 @@ class _SourceCardState extends State<SourceCard> {
                 // Expanded content: summary + quiz
                 if (_isExpanded && source.isReady) ...[
                   const SizedBox(height: 16),
-                  const Divider(color: SourcelyColors.glassBorder),
+                  const Divider(color: SourcelyColors.borderLight),
                   const SizedBox(height: 12),
 
                   // Chunk count
@@ -185,7 +185,7 @@ class _SourceCardState extends State<SourceCard> {
                       child: Row(
                         children: [
                           Icon(Icons.dataset_outlined,
-                              size: 14, color: SourcelyColors.textMuted),
+                              size: 14, color: SourcelyColors.textLightMuted),
                           const SizedBox(width: 6),
                           Text(
                             '${source.chunkCount} chunks indexed',
@@ -200,7 +200,7 @@ class _SourceCardState extends State<SourceCard> {
                     Text(
                       'Summary',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: SourcelyColors.accent,
+                            color: SourcelyColors.secondary,
                           ),
                     ),
                     const SizedBox(height: 8),
@@ -227,13 +227,13 @@ class _SourceCardState extends State<SourceCard> {
                             ? Icons.keyboard_arrow_up
                             : Icons.keyboard_arrow_down,
                         size: 18,
-                        color: SourcelyColors.textMuted,
+                        color: SourcelyColors.textLightMuted,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _isExpanded ? 'Collapse' : 'View summary & quiz',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: SourcelyColors.textMuted,
+                              color: SourcelyColors.textLightMuted,
                             ),
                       ),
                     ],
@@ -273,7 +273,7 @@ class _StatusBadge extends StatelessWidget {
         icon = Icons.error;
         label = 'Failed';
       default:
-        color = SourcelyColors.textMuted;
+        color = SourcelyColors.textLightMuted;
         icon = Icons.help;
         label = status;
     }

@@ -16,7 +16,7 @@ class LoadingShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: SourcelyColors.surfaceLight,
-      highlightColor: SourcelyColors.surfaceCard.withValues(alpha: 0.5),
+      highlightColor: SourcelyColors.surfaceLight.withValues(alpha: 0.5),
       child: Column(
         children: List.generate(
           itemCount,
@@ -97,7 +97,7 @@ class TypingIndicator extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              gradient: SourcelyColors.primaryGradient,
+              gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Center(
@@ -114,7 +114,7 @@ class TypingIndicator extends StatelessWidget {
             decoration: BoxDecoration(
               color: SourcelyColors.surfaceLight,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: SourcelyColors.glassBorder),
+              border: Border.all(color: SourcelyColors.borderLight),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -180,7 +180,7 @@ class _DotAnimationState extends State<_DotAnimation>
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: SourcelyColors.primaryLight.withValues(alpha: 0.4 + 0.6 * _animation.value),
+              color: SourcelyColors.secondary.withValues(alpha: 0.4 + 0.6 * _animation.value),
               shape: BoxShape.circle,
             ),
           ),

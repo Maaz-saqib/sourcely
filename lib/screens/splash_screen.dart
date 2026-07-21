@@ -51,9 +51,9 @@ class _SplashScreenState extends State<SplashScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              SourcelyColors.background,
+              SourcelyColors.backgroundLight,
               Color(0xFF0F1328),
-              SourcelyColors.background,
+              SourcelyColors.backgroundLight,
             ],
           ),
         ),
@@ -66,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  gradient: SourcelyColors.primaryGradient,
+                  gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -98,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen> {
               // App name
               GradientText(
                 'Sourcely',
-                gradient: SourcelyColors.primaryGradient,
+                gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                       fontSize: 36,
                       fontWeight: FontWeight.w800,
@@ -115,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                 'Your AI Knowledge Assistant',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: SourcelyColors.textSecondary,
+                      color: SourcelyColors.textLightSecondary,
                     ),
               )
                   .animate()

@@ -7,12 +7,14 @@ library;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config/constants.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/spaces_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/splash_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
@@ -20,17 +22,22 @@ import 'services/auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+
   // Initialize Supabase
   await Supabase.initialize(
     url: AppConstants.supabaseUrl,
     publishableKey: AppConstants.supabaseAnonKey,
   );
 
-  runApp(const SourcelyApp());
+  runApp(SourcelyApp(prefs: prefs));
 }
 
 class SourcelyApp extends StatelessWidget {
-  const SourcelyApp({super.key});
+  final SharedPreferences prefs;
+
+  const SourcelyApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +48,9 @@ class SourcelyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
+          create: (_) => ThemeProvider(prefs),
+        ),
+        ChangeNotifierProvider(
           create: (_) => AuthProvider(authService, apiService),
         ),
         ChangeNotifierProvider(
@@ -50,11 +60,17 @@ class SourcelyApp extends StatelessWidget {
           create: (_) => ChatProvider(apiService),
         ),
       ],
-      child: MaterialApp(
-        title: 'Sourcely — AI Knowledge Assistant',
-        debugShowCheckedModeBanner: false,
-        theme: SourcelyTheme.darkTheme,
-        home: const SplashScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Sourcely — AI Knowledge Assistant',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeProvider.themeMode,
+            theme: SourcelyTheme.lightTheme,
+            darkTheme: SourcelyTheme.darkTheme,
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }

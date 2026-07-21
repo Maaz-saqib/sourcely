@@ -7,8 +7,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
+import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/spaces_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/loading_shimmer.dart';
 import '../auth/login_screen.dart';
 import '../space/space_screen.dart';
@@ -41,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                gradient: SourcelyColors.primaryGradient,
+                gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.add, color: Colors.white, size: 20),
@@ -120,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         GradientText(
                           'Sourcely',
-                          gradient: SourcelyColors.primaryGradient,
+                          gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                           style: Theme.of(context).textTheme.displayMedium,
                         ),
                         const SizedBox(height: 4),
@@ -131,19 +133,41 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
+                  // Theme Toggle
+                  Consumer<ThemeProvider>(
+                    builder: (context, themeProvider, _) {
+                      IconData icon;
+                      switch (themeProvider.themeMode) {
+                        case ThemeMode.system:
+                          icon = Icons.brightness_auto;
+                          break;
+                        case ThemeMode.light:
+                          icon = Icons.light_mode;
+                          break;
+                        case ThemeMode.dark:
+                          icon = Icons.dark_mode;
+                          break;
+                      }
+                      return IconButton(
+                        icon: Icon(icon, color: Theme.of(context).colorScheme.primary),
+                        onPressed: () => themeProvider.toggleTheme(),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
                   // User menu
                   PopupMenuButton<String>(
                     icon: Container(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: SourcelyColors.surfaceLight,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: SourcelyColors.glassBorder),
+                        border: Border.all(color: Theme.of(context).dividerColor),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person_outline,
-                        color: SourcelyColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     onSelected: (value) async {
@@ -267,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
-          gradient: SourcelyColors.primaryGradient,
+          gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -310,12 +334,12 @@ class _SpaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: glassCardDecoration(),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: minimalCardDecoration(context),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(18),
@@ -326,7 +350,7 @@ class _SpaceCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    gradient: SourcelyColors.primaryGradient,
+                    gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -352,7 +376,7 @@ class _SpaceCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.description_outlined,
-                              size: 13, color: SourcelyColors.textMuted),
+                              size: 13, color: SourcelyColors.textLightMuted),
                           const SizedBox(width: 4),
                           Text(
                             '$sourceCount source${sourceCount == 1 ? '' : 's'}',
@@ -367,12 +391,12 @@ class _SpaceCard extends StatelessWidget {
                 // Actions
                 IconButton(
                   icon: const Icon(Icons.delete_outline,
-                      color: SourcelyColors.textMuted, size: 20),
+                      color: SourcelyColors.textLightMuted, size: 20),
                   onPressed: onDelete,
                 ),
                 const Icon(
                   Icons.chevron_right,
-                  color: SourcelyColors.textMuted,
+                  color: SourcelyColors.textLightMuted,
                 ),
               ],
             ),
@@ -406,7 +430,7 @@ class _EmptyState extends StatelessWidget {
               child: const Icon(
                 Icons.folder_open,
                 size: 40,
-                color: SourcelyColors.primaryLight,
+                color: SourcelyColors.secondary,
               ),
             ),
             const SizedBox(height: 20),
@@ -423,7 +447,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
-                gradient: SourcelyColors.primaryGradient,
+                gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ElevatedButton.icon(

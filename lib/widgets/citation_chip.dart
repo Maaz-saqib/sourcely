@@ -31,12 +31,12 @@ class _CitationChipState extends State<CitationChip> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isWeb
-              ? SourcelyColors.accent.withValues(alpha: 0.1)
+              ? SourcelyColors.secondary.withValues(alpha: 0.1)
               : SourcelyColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isWeb
-                ? SourcelyColors.accent.withValues(alpha: 0.3)
+                ? SourcelyColors.secondary.withValues(alpha: 0.3)
                 : SourcelyColors.primary.withValues(alpha: 0.3),
           ),
         ),
@@ -49,7 +49,7 @@ class _CitationChipState extends State<CitationChip> {
                 Icon(
                   isWeb ? Icons.language : Icons.description,
                   size: 12,
-                  color: isWeb ? SourcelyColors.accent : SourcelyColors.primaryLight,
+                  color: isWeb ? SourcelyColors.secondary : SourcelyColors.secondary,
                 ),
                 const SizedBox(width: 4),
                 Flexible(
@@ -59,8 +59,8 @@ class _CitationChipState extends State<CitationChip> {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: isWeb
-                          ? SourcelyColors.accent
-                          : SourcelyColors.primaryLight,
+                          ? SourcelyColors.secondary
+                          : SourcelyColors.secondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -70,7 +70,7 @@ class _CitationChipState extends State<CitationChip> {
                 Icon(
                   _isExpanded ? Icons.expand_less : Icons.expand_more,
                   size: 14,
-                  color: SourcelyColors.textMuted,
+                  color: SourcelyColors.textLightMuted,
                 ),
               ],
             ),
@@ -82,7 +82,7 @@ class _CitationChipState extends State<CitationChip> {
                 Text(
                   widget.citation.snippet!,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: SourcelyColors.textSecondary,
+                        color: SourcelyColors.textLightSecondary,
                         height: 1.4,
                       ),
                   maxLines: 3,
@@ -101,7 +101,7 @@ class _CitationChipState extends State<CitationChip> {
                     widget.citation.url!,
                     style: TextStyle(
                       fontSize: 10,
-                      color: SourcelyColors.accent,
+                      color: SourcelyColors.secondary,
                       decoration: TextDecoration.underline,
                     ),
                     maxLines: 1,

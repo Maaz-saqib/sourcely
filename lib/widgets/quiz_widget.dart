@@ -19,12 +19,12 @@ class QuizWidget extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.quiz, size: 16, color: SourcelyColors.accent),
+            const Icon(Icons.quiz, size: 16, color: SourcelyColors.secondary),
             const SizedBox(width: 6),
             Text(
               'Knowledge Check',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: SourcelyColors.accent,
+                    color: SourcelyColors.secondary,
                   ),
             ),
           ],
@@ -62,7 +62,7 @@ class _QuizCardState extends State<_QuizCard> {
       decoration: BoxDecoration(
         color: SourcelyColors.surfaceLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SourcelyColors.glassBorder),
+        border: Border.all(color: SourcelyColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +74,7 @@ class _QuizCardState extends State<_QuizCard> {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  gradient: SourcelyColors.primaryGradient,
+                  gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -131,8 +131,8 @@ class _QuizCardState extends State<_QuizCard> {
                       _showAnswer ? widget.item.answer : 'Tap to reveal answer',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: _showAnswer
-                                ? SourcelyColors.textPrimary
-                                : SourcelyColors.primaryLight,
+                                ? SourcelyColors.textLightPrimary
+                                : SourcelyColors.secondary,
                           ),
                     ),
                   ),

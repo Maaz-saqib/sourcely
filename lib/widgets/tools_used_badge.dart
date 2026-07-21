@@ -21,7 +21,7 @@ class ToolsUsedBadge extends StatelessWidget {
         Icon(
           Icons.build_circle_outlined,
           size: 12,
-          color: SourcelyColors.textMuted,
+          color: SourcelyColors.textLightMuted,
         ),
         const SizedBox(width: 4),
         ...toolsUsed.asMap().entries.map((entry) {
@@ -37,7 +37,7 @@ class ToolsUsedBadge extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: (isKb
                           ? SourcelyColors.primary
-                          : SourcelyColors.accent)
+                          : SourcelyColors.secondary)
                       .withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -48,8 +48,8 @@ class ToolsUsedBadge extends StatelessWidget {
                       isKb ? Icons.storage : Icons.travel_explore,
                       size: 10,
                       color: isKb
-                          ? SourcelyColors.primaryLight
-                          : SourcelyColors.accent,
+                          ? SourcelyColors.secondary
+                          : SourcelyColors.secondary,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -58,8 +58,8 @@ class ToolsUsedBadge extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: isKb
-                            ? SourcelyColors.primaryLight
-                            : SourcelyColors.accent,
+                            ? SourcelyColors.secondary
+                            : SourcelyColors.secondary,
                       ),
                     ),
                   ],
@@ -72,7 +72,7 @@ class ToolsUsedBadge extends StatelessWidget {
                     '+',
                     style: TextStyle(
                       fontSize: 10,
-                      color: SourcelyColors.textMuted,
+                      color: SourcelyColors.textLightMuted,
                     ),
                   ),
                 ),

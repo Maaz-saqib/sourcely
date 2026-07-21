@@ -127,8 +127,8 @@ class _SpaceScreenState extends State<SpaceScreen>
           controller: _tabController,
           indicatorColor: SourcelyColors.primary,
           labelColor: SourcelyColors.primary,
-          unselectedLabelColor: SourcelyColors.textMuted,
-          dividerColor: SourcelyColors.glassBorder,
+          unselectedLabelColor: SourcelyColors.textLightMuted,
+          dividerColor: SourcelyColors.borderLight,
           tabs: const [
             Tab(icon: Icon(Icons.source, size: 20), text: 'Sources'),
             Tab(icon: Icon(Icons.chat_bubble_outline, size: 20), text: 'Chat'),
@@ -181,7 +181,7 @@ class _SourcesTab extends StatelessWidget {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: SourcelyColors.primaryGradient,
+                        gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ElevatedButton.icon(
@@ -222,13 +222,13 @@ class _SourcesTab extends StatelessWidget {
                           Icon(
                             Icons.cloud_upload_outlined,
                             size: 48,
-                            color: SourcelyColors.textMuted,
+                            color: SourcelyColors.textLightMuted,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'No sources yet',
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: SourcelyColors.textMuted,
+                                  color: SourcelyColors.textLightMuted,
                                 ),
                           ),
                           const SizedBox(height: 8),

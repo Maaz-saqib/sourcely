@@ -59,9 +59,9 @@ class _SignupScreenState extends State<SignupScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              SourcelyColors.background,
+              SourcelyColors.backgroundLight,
               Color(0xFF0F1328),
-              SourcelyColors.background,
+              SourcelyColors.backgroundLight,
             ],
           ),
         ),
@@ -77,7 +77,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      gradient: SourcelyColors.primaryGradient,
+                      gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -97,7 +97,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   GradientText(
                     'Create Account',
-                    gradient: SourcelyColors.primaryGradient,
+                    gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                     style: Theme.of(context).textTheme.displayMedium,
                   ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
 
@@ -122,7 +122,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           decoration: const InputDecoration(
                             hintText: 'Email address',
                             prefixIcon: Icon(Icons.email_outlined,
-                                color: SourcelyColors.textMuted),
+                                color: SourcelyColors.textLightMuted),
                           ),
                           style: Theme.of(context).textTheme.bodyLarge,
                           validator: (value) {
@@ -145,13 +145,13 @@ class _SignupScreenState extends State<SignupScreen> {
                           decoration: InputDecoration(
                             hintText: 'Password',
                             prefixIcon: const Icon(Icons.lock_outlined,
-                                color: SourcelyColors.textMuted),
+                                color: SourcelyColors.textLightMuted),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword
                                     ? Icons.visibility_off
                                     : Icons.visibility,
-                                color: SourcelyColors.textMuted,
+                                color: SourcelyColors.textLightMuted,
                               ),
                               onPressed: () =>
                                   setState(() => _obscurePassword = !_obscurePassword),
@@ -178,13 +178,13 @@ class _SignupScreenState extends State<SignupScreen> {
                           decoration: InputDecoration(
                             hintText: 'Confirm password',
                             prefixIcon: const Icon(Icons.lock_outlined,
-                                color: SourcelyColors.textMuted),
+                                color: SourcelyColors.textLightMuted),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscureConfirmPassword
                                     ? Icons.visibility_off
                                     : Icons.visibility,
-                                color: SourcelyColors.textMuted,
+                                color: SourcelyColors.textLightMuted,
                               ),
                               onPressed: () => setState(
                                   () => _obscureConfirmPassword = !_obscureConfirmPassword),
@@ -237,7 +237,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               height: 52,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  gradient: SourcelyColors.primaryGradient,
+                                  gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(

@@ -165,10 +165,10 @@ class _ChatInputBar extends StatelessWidget {
         top: 12,
         bottom: MediaQuery.of(context).padding.bottom + 12,
       ),
-      decoration: const BoxDecoration(
-        color: SourcelyColors.surface,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: SourcelyColors.glassBorder),
+          top: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: Row(
@@ -184,11 +184,11 @@ class _ChatInputBar extends StatelessWidget {
                 fillColor: SourcelyColors.surfaceLight,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: SourcelyColors.glassBorder),
+                  borderSide: const BorderSide(color: SourcelyColors.borderLight),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: SourcelyColors.glassBorder),
+                  borderSide: const BorderSide(color: SourcelyColors.borderLight),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
@@ -207,7 +207,7 @@ class _ChatInputBar extends StatelessWidget {
             builder: (context, provider, _) {
               return Container(
                 decoration: BoxDecoration(
-                  gradient: SourcelyColors.primaryGradient,
+                  gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -251,7 +251,7 @@ class _EmptyChatState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                gradient: SourcelyColors.primaryGradient,
+                gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
@@ -316,7 +316,7 @@ class _SuggestionChip extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: SourcelyColors.primaryLight,
+              color: SourcelyColors.secondary,
             ),
       ),
     );
