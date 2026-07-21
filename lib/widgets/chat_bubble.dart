@@ -4,9 +4,12 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config/theme.dart';
 import '../models/message.dart';
+import '../providers/chat_provider.dart';
 import 'citation_chip.dart';
 import 'tools_used_badge.dart';
 
@@ -108,6 +111,26 @@ class ChatBubble extends StatelessWidget {
                       children: message.citations!
                           .map((c) => CitationChip(citation: c))
                           .toList(),
+                    ),
+                  ],
+                  // Export button
+                  if (!isUser) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.picture_as_pdf, size: 16),
+                        label: const Text('Export PDF', style: TextStyle(fontSize: 12)),
+                        onPressed: () async {
+                          final url = await context.read<ChatProvider>().exportConversation(message.id);
+                          if (url != null) {
+                            final uri = Uri.parse(url);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            }
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ],

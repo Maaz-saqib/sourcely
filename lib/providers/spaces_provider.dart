@@ -192,8 +192,6 @@ class SpacesProvider extends ChangeNotifier {
           status: updated.status,
           errorMessage: updated.errorMessage,
           chunkCount: updated.chunkCount,
-          summary: updated.summary,
-          quiz: updated.quiz,
           createdAt: existing.createdAt,
         );
         notifyListeners();

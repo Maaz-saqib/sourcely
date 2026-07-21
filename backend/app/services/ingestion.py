@@ -16,7 +16,6 @@ from langchain_chroma import Chroma
 
 from app.config import get_settings
 from app.database import get_supabase_client
-from app.services.summary_quiz import generate_summary_and_quiz
 
 
 def _get_embeddings() -> HuggingFaceEmbeddings:
@@ -166,16 +165,11 @@ def run_ingestion_pipeline(
             ids=[f"{source_id}_chunk_{i}" for i in range(len(chunks))],
         )
 
-        # Step 4: Generate summary and quiz
-        summary_quiz = generate_summary_and_quiz(full_text)
-
         # Step 5: Update source status to ready
         supabase.table("sources").update(
             {
                 "status": "ready",
                 "chunk_count": len(chunks),
-                "summary": summary_quiz.get("summary", ""),
-                "quiz": summary_quiz.get("quiz", []),
             }
         ).eq("id", source_id).execute()
 

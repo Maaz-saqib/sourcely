@@ -60,6 +60,54 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Conversation Selector
+        Consumer<ChatProvider>(
+          builder: (context, provider, _) {
+            if (provider.conversations.isEmpty) return const SizedBox.shrink();
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+                color: Theme.of(context).colorScheme.surface,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: provider.currentConversation?.id,
+                        isExpanded: true,
+                        icon: const Icon(Icons.arrow_drop_down),
+                        items: provider.conversations.map((convo) {
+                          return DropdownMenuItem(
+                            value: convo.id,
+                            child: Text(
+                              convo.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (id) {
+                          if (id != null) {
+                            final convo = provider.conversations.firstWhere((c) => c.id == id);
+                            provider.loadConversation(convo);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline, color: SourcelyColors.primary),
+                    onPressed: () => provider.createNewConversation(),
+                    tooltip: 'New Conversation',
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
         // Messages list
         Expanded(
           child: Consumer<ChatProvider>(

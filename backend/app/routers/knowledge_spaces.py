@@ -32,7 +32,9 @@ async def create_knowledge_space(
         "id": space_id,
         "user_id": user_id,
         "name": body.name,
+        "emoji": body.emoji,
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
     result = supabase.table("knowledge_spaces").insert(data).execute()
@@ -45,7 +47,9 @@ async def create_knowledge_space(
         id=row["id"],
         user_id=row["user_id"],
         name=row["name"],
+        emoji=row.get("emoji", "📚"),
         created_at=row["created_at"],
+        updated_at=row.get("updated_at"),
         source_count=0,
     )
 
@@ -79,7 +83,9 @@ async def list_knowledge_spaces(user_id: str = Depends(get_user_id)):
                 id=row["id"],
                 user_id=row["user_id"],
                 name=row["name"],
+                emoji=row.get("emoji", "📚"),
                 created_at=row["created_at"],
+                updated_at=row.get("updated_at"),
                 source_count=count,
             )
         )
@@ -130,19 +136,29 @@ async def get_knowledge_space(
                 status=s["status"],
                 error_message=s.get("error_message"),
                 chunk_count=s.get("chunk_count"),
-                summary=s.get("summary"),
-                quiz=s.get("quiz"),
                 created_at=s["created_at"],
             )
         )
+
+    # Get conversations
+    convos_result = (
+        supabase.table("conversations")
+        .select("*")
+        .eq("knowledge_space_id", space_id)
+        .order("updated_at", desc=True)
+        .execute()
+    )
 
     return KnowledgeSpaceDetail(
         id=row["id"],
         user_id=row["user_id"],
         name=row["name"],
+        emoji=row.get("emoji", "📚"),
         created_at=row["created_at"],
+        updated_at=row.get("updated_at"),
         source_count=len(sources),
         sources=sources,
+        conversations=convos_result.data,
     )
 
 

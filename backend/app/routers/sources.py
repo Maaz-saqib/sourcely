@@ -38,6 +38,11 @@ async def create_source_from_link(
     if not space.data:
         raise HTTPException(status_code=404, detail="Knowledge space not found")
 
+    # Enforce 6 source cap
+    count_result = supabase.table("sources").select("id", count="exact").eq("knowledge_space_id", body.knowledge_space_id).execute()
+    if count_result.count and count_result.count >= 6:
+        raise HTTPException(status_code=400, detail="Maximum of 6 sources per knowledge space reached.")
+
     source_id = str(uuid.uuid4())
     original_name = body.original_name or body.source_url
 
@@ -100,6 +105,11 @@ async def create_source_from_file(
     )
     if not space.data:
         raise HTTPException(status_code=404, detail="Knowledge space not found")
+
+    # Enforce 6 source cap
+    count_result = supabase.table("sources").select("id", count="exact").eq("knowledge_space_id", knowledge_space_id).execute()
+    if count_result.count and count_result.count >= 6:
+        raise HTTPException(status_code=400, detail="Maximum of 6 sources per knowledge space reached.")
 
     # Determine source type from file extension
     filename = file.filename or "unknown"
@@ -192,8 +202,6 @@ async def get_source_status(
         status=row["status"],
         error_message=row.get("error_message"),
         chunk_count=row.get("chunk_count"),
-        summary=row.get("summary"),
-        quiz=row.get("quiz"),
     )
 
 @router.delete("/{source_id}")

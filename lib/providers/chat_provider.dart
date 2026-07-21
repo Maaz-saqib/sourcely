@@ -1,43 +1,70 @@
-/// Chat Provider for Sourcely — manages chat state and messages.
+/// Chat Provider for Sourcely — manages conversations and chat state.
 library;
-
-
 
 import 'package:flutter/material.dart';
 
 import '../models/message.dart';
+import '../models/conversation.dart';
 import '../services/api_service.dart';
 
 class ChatProvider extends ChangeNotifier {
   final ApiService _apiService;
 
+  List<Conversation> _conversations = [];
   List<Message> _messages = [];
-  String? _conversationId;
+  Conversation? _currentConversation;
+  String? _currentSpaceId;
+  
   bool _isLoading = false;
   bool _isSending = false;
   String? _errorMessage;
-  String? _currentSpaceId;
 
   ChatProvider(this._apiService);
 
+  List<Conversation> get conversations => _conversations;
   List<Message> get messages => _messages;
-  String? get conversationId => _conversationId;
+  Conversation? get currentConversation => _currentConversation;
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
   String? get errorMessage => _errorMessage;
 
-  /// Load chat history for a knowledge space
-  Future<void> loadChatHistory(String spaceId) async {
+  /// Load conversations for a knowledge space
+  Future<void> loadConversations(String spaceId) async {
     _currentSpaceId = spaceId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _messages = await _apiService.getChatHistory(spaceId);
-      if (_messages.isNotEmpty) {
-        _conversationId = _messages.first.conversationId;
+      _conversations = await _apiService.listConversations(spaceId);
+      if (_conversations.isNotEmpty) {
+        await loadConversation(_conversations.first);
+      } else {
+        _currentConversation = null;
+        _messages = [];
+        _isLoading = false;
+        notifyListeners();
       }
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to load conversations';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Load a specific conversation
+  Future<void> loadConversation(Conversation conversation) async {
+    _currentConversation = conversation;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _messages = await _apiService.getChatHistory(conversation.id);
       _isLoading = false;
       notifyListeners();
     } on ApiException catch (e) {
@@ -50,6 +77,28 @@ class ChatProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+  
+  /// Create a new conversation
+  Future<void> createNewConversation() async {
+    if (_currentSpaceId == null) return;
+    
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      final newConvo = await _apiService.createConversation(_currentSpaceId!);
+      _conversations.insert(0, newConvo);
+      await loadConversation(newConvo);
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to create conversation';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   /// Send a message to the agent
   Future<bool> sendMessage(String message) async {
@@ -57,11 +106,25 @@ class ChatProvider extends ChangeNotifier {
 
     _isSending = true;
     _errorMessage = null;
+    
+    if (_currentConversation == null) {
+      // Create a conversation if one doesn't exist
+      try {
+        final newConvo = await _apiService.createConversation(_currentSpaceId!, name: message.length > 30 ? '${message.substring(0, 30)}...' : message);
+        _conversations.insert(0, newConvo);
+        _currentConversation = newConvo;
+      } catch (e) {
+        _errorMessage = 'Failed to create conversation';
+        _isSending = false;
+        notifyListeners();
+        return false;
+      }
+    }
 
     // Add optimistic user message
     final tempUserMsg = Message(
       id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
-      conversationId: _conversationId ?? '',
+      conversationId: _currentConversation!.id,
       role: 'user',
       content: message,
       createdAt: DateTime.now().toIso8601String(),
@@ -71,17 +134,14 @@ class ChatProvider extends ChangeNotifier {
 
     try {
       final response = await _apiService.sendChatMessage(
-        knowledgeSpaceId: _currentSpaceId!,
+        conversationId: _currentConversation!.id,
         message: message,
-        conversationId: _conversationId,
       );
-
-      _conversationId = response['conversation_id'] as String?;
 
       // Build assistant message
       final assistantMsg = Message(
         id: response['message_id'] as String? ?? 'msg_${DateTime.now().millisecondsSinceEpoch}',
-        conversationId: _conversationId ?? '',
+        conversationId: _currentConversation!.id,
         role: 'assistant',
         content: response['answer'] as String,
         citations: (response['citations'] as List<dynamic>?)
@@ -113,10 +173,23 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  /// Export conversation to PDF
+  Future<String?> exportConversation(String messageId) async {
+    try {
+      final url = await _apiService.exportMessagePdf(messageId);
+      return url;
+    } catch (e) {
+      _errorMessage = 'Failed to export to PDF';
+      notifyListeners();
+      return null;
+    }
+  }
+
   /// Clear chat history (for switching spaces)
   void clearChat() {
     _messages = [];
-    _conversationId = null;
+    _conversations = [];
+    _currentConversation = null;
     _currentSpaceId = null;
     _errorMessage = null;
     notifyListeners();

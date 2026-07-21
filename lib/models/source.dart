@@ -2,21 +2,7 @@
 /// Represents an ingested knowledge source (PDF, DOCX, YouTube, URL).
 library;
 
-class QuizItem {
-  final String question;
-  final String answer;
 
-  QuizItem({required this.question, required this.answer});
-
-  factory QuizItem.fromJson(Map<String, dynamic> json) {
-    return QuizItem(
-      question: json['question'] as String,
-      answer: json['answer'] as String,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {'question': question, 'answer': answer};
-}
 
 class Source {
   final String id;
@@ -27,8 +13,7 @@ class Source {
   final String status;
   final String? errorMessage;
   final int? chunkCount;
-  final String? summary;
-  final List<QuizItem>? quiz;
+
   final String createdAt;
 
   Source({
@@ -40,8 +25,7 @@ class Source {
     required this.status,
     this.errorMessage,
     this.chunkCount,
-    this.summary,
-    this.quiz,
+
     required this.createdAt,
   });
 
@@ -55,10 +39,7 @@ class Source {
       status: json['status'] as String,
       errorMessage: json['error_message'] as String?,
       chunkCount: json['chunk_count'] as int?,
-      summary: json['summary'] as String?,
-      quiz: (json['quiz'] as List<dynamic>?)
-          ?.map((e) => QuizItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+
       createdAt: json['created_at'] as String,
     );
   }

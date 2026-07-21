@@ -22,8 +22,13 @@ class Settings(BaseSettings):
     # Chroma
     chroma_persist_dir: str = "./chroma_data"
 
-    # LLM
-    llm_model_name: str = "mistralai/Mistral-7B-Instruct-v0.3"
+    # LLM (Primary - Groq)
+    groq_api_key: str = ""
+    groq_model_name: str = "llama-3.3-70b-versatile"
+
+    # LLM (Fallback - Gemini)
+    gemini_api_key: str = ""
+    gemini_model_name: str = "gemini-2.0-flash"
 
     # Embeddings
     embeddings_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"

@@ -7,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../config/theme.dart';
 import '../models/source.dart';
-import 'quiz_widget.dart';
 import 'package:provider/provider.dart';
 import '../providers/spaces_provider.dart';
 
@@ -172,73 +171,7 @@ class _SourceCardState extends State<SourceCard> {
                   ),
                 ],
 
-                // Expanded content: summary + quiz
-                if (_isExpanded && source.isReady) ...[
-                  const SizedBox(height: 16),
-                  const Divider(color: SourcelyColors.borderLight),
-                  const SizedBox(height: 12),
-
-                  // Chunk count
-                  if (source.chunkCount != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        children: [
-                          Icon(Icons.dataset_outlined,
-                              size: 14, color: SourcelyColors.textLightMuted),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${source.chunkCount} chunks indexed',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Summary
-                  if (source.summary != null && source.summary!.isNotEmpty) ...[
-                    Text(
-                      'Summary',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: SourcelyColors.secondary,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      source.summary!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Quiz
-                  if (source.quiz != null && source.quiz!.isNotEmpty)
-                    QuizWidget(quizItems: source.quiz!),
-                ],
-
-                // Expand/collapse hint
-                if (source.isReady) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        size: 18,
-                        color: SourcelyColors.textLightMuted,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isExpanded ? 'Collapse' : 'View summary & quiz',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: SourcelyColors.textLightMuted,
-                            ),
-                      ),
-                    ],
-                  ),
-                ],
+                // Expand/collapse hint removed since summary/quiz are removed
               ],
             ),
           ),

@@ -227,13 +227,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   return RefreshIndicator(
                     onRefresh: () => provider.loadSpaces(),
                     color: SourcelyColors.primary,
-                    child: ListView.builder(
+                    child: GridView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 250,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.0,
+                      ),
                       itemCount: provider.spaces.length,
                       itemBuilder: (context, index) {
                         final space = provider.spaces[index];
                         return _SpaceCard(
                           name: space.name,
+                          emoji: space.emoji,
                           sourceCount: space.sourceCount,
                           createdAt: space.createdAt,
                           onTap: () {
@@ -318,6 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _SpaceCard extends StatelessWidget {
   final String name;
+  final String emoji;
   final int sourceCount;
   final String createdAt;
   final VoidCallback onTap;
@@ -325,6 +333,7 @@ class _SpaceCard extends StatelessWidget {
 
   const _SpaceCard({
     required this.name,
+    required this.emoji,
     required this.sourceCount,
     required this.createdAt,
     required this.onTap,
@@ -334,7 +343,6 @@ class _SpaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: minimalCardDecoration(context),
       child: Material(
         color: Colors.transparent,
@@ -342,61 +350,69 @@ class _SpaceCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Row(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Space icon
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.folder_special,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                // Top row with Emoji and Delete Action
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          color: SourcelyColors.textLightMuted, size: 20),
+                      onPressed: onDelete,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-
+                const SizedBox(height: 16),
                 // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: Theme.of(context).textTheme.titleMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.description_outlined,
-                              size: 13, color: SourcelyColors.textLightMuted),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$sourceCount source${sourceCount == 1 ? '' : 's'}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                Text(
+                  name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-
-                // Actions
-                IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      color: SourcelyColors.textLightMuted, size: 20),
-                  onPressed: onDelete,
-                ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: SourcelyColors.textLightMuted,
+                const Spacer(),
+                // Bottom row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.description_outlined,
+                            size: 13, color: SourcelyColors.textLightMuted),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$sourceCount source${sourceCount == 1 ? '' : 's'}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: SourcelyColors.textLightMuted,
+                    ),
+                  ],
                 ),
               ],
             ),

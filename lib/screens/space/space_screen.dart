@@ -43,7 +43,7 @@ class _SpaceScreenState extends State<SpaceScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SpacesProvider>().loadSpaceDetail(widget.spaceId);
-      context.read<ChatProvider>().loadChatHistory(widget.spaceId);
+      context.read<ChatProvider>().loadConversations(widget.spaceId);
       _startPolling();
     });
   }
@@ -112,6 +112,49 @@ class _SpaceScreenState extends State<SpaceScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width > 800;
+
+    final sourcesPanel = _SourcesTab(
+      onAddSource: _showAddSourceDialog,
+      onUploadFile: _handleFileUpload,
+    );
+    final conversationsPanel = const _ConversationsPanel();
+
+    if (isDesktop) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.spaceName),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                context.read<SpacesProvider>().loadSpaceDetail(widget.spaceId);
+                context.read<ChatProvider>().loadConversations(widget.spaceId);
+              },
+            ),
+          ],
+        ),
+        body: Row(
+          children: [
+            SizedBox(
+              width: 350,
+              child: Column(
+                children: [
+                  Expanded(flex: 1, child: sourcesPanel),
+                  const Divider(height: 1),
+                  Expanded(flex: 1, child: conversationsPanel),
+                ],
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: ChatScreen(spaceId: widget.spaceId),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.spaceName),
@@ -246,6 +289,71 @@ class _SourcesTab extends StatelessWidget {
                       itemBuilder: (context, index) {
                         return SourceCard(
                           source: provider.currentSources[index],
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ConversationsPanel extends StatelessWidget {
+  const _ConversationsPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ChatProvider>(
+      builder: (context, provider, _) {
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Conversations',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: SourcelyColors.primary),
+                    onPressed: () => provider.createNewConversation(),
+                    tooltip: 'New Conversation',
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: provider.conversations.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No conversations yet',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: SourcelyColors.textLightMuted,
+                            ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: provider.conversations.length,
+                      itemBuilder: (context, index) {
+                        final convo = provider.conversations[index];
+                        final isSelected = provider.currentConversation?.id == convo.id;
+                        return ListTile(
+                          title: Text(
+                            convo.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedTileColor: SourcelyColors.primary.withValues(alpha: 0.1),
+                          onTap: () => provider.loadConversation(convo),
+                          // Optional: Add a trailing delete button here if desired
                         );
                       },
                     ),

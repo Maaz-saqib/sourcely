@@ -3,7 +3,7 @@ Pydantic request/response schemas for Sourcely API endpoints.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -12,6 +12,7 @@ from datetime import datetime
 class KnowledgeSpaceCreate(BaseModel):
     """Request body for creating a new knowledge space."""
     name: str = Field(..., min_length=1, max_length=200)
+    emoji: Optional[str] = "📚"
 
 
 class KnowledgeSpaceResponse(BaseModel):
@@ -19,13 +20,16 @@ class KnowledgeSpaceResponse(BaseModel):
     id: str
     user_id: str
     name: str
+    emoji: Optional[str] = "📚"
     created_at: str
+    updated_at: Optional[str] = None
     source_count: Optional[int] = 0
 
 
 class KnowledgeSpaceDetail(KnowledgeSpaceResponse):
-    """Detailed knowledge space response including sources."""
+    """Detailed knowledge space response including sources and conversations."""
     sources: list["SourceResponse"] = []
+    conversations: list["ConversationResponse"] = []
 
 
 # ─── Sources ──────────────────────────────────────────────────────
@@ -38,12 +42,6 @@ class SourceLinkCreate(BaseModel):
     original_name: Optional[str] = None
 
 
-class QuizItem(BaseModel):
-    """A single quiz question/answer pair."""
-    question: str
-    answer: str
-
-
 class SourceResponse(BaseModel):
     """Response body for a source."""
     id: str
@@ -54,8 +52,6 @@ class SourceResponse(BaseModel):
     status: str
     error_message: Optional[str] = None
     chunk_count: Optional[int] = None
-    summary: Optional[str] = None
-    quiz: Optional[list[QuizItem]] = None
     created_at: str
 
 
@@ -65,8 +61,24 @@ class SourceStatusResponse(BaseModel):
     status: str
     error_message: Optional[str] = None
     chunk_count: Optional[int] = None
-    summary: Optional[str] = None
-    quiz: Optional[list[QuizItem]] = None
+
+
+# ─── Conversations ────────────────────────────────────────────────
+
+class ConversationCreate(BaseModel):
+    name: Optional[str] = "New Conversation"
+
+
+class ConversationUpdate(BaseModel):
+    name: str
+
+
+class ConversationResponse(BaseModel):
+    id: str
+    knowledge_space_id: str
+    name: str
+    created_at: str
+    updated_at: str
 
 
 # ─── Chat ─────────────────────────────────────────────────────────
@@ -74,7 +86,6 @@ class SourceStatusResponse(BaseModel):
 class ChatRequest(BaseModel):
     """Request body for sending a chat message."""
     message: str = Field(..., min_length=1)
-    conversation_id: Optional[str] = None
 
 
 class Citation(BaseModel):

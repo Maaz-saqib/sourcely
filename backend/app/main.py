@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import knowledge_spaces, sources, chat
+from app.routers import knowledge_spaces, sources, conversations
 
 # Create the FastAPI app
 app = FastAPI(
@@ -32,7 +32,7 @@ app.add_middleware(
 # Include routers
 app.include_router(knowledge_spaces.router, prefix="/api")
 app.include_router(sources.router, prefix="/api")
-app.include_router(chat.router, prefix="/api")
+app.include_router(conversations.router, prefix="/api")
 
 
 @app.get("/")

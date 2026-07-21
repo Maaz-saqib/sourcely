@@ -11,6 +11,7 @@ import '../config/constants.dart';
 import '../models/knowledge_space.dart';
 import '../models/source.dart';
 import '../models/message.dart';
+import '../models/conversation.dart';
 
 class ApiService {
   final String baseUrl;
@@ -153,11 +154,7 @@ class ApiService {
       type: '',
       status: data['status'],
       errorMessage: data['error_message'],
-      chunkCount: data['chunk_count'],
-      summary: data['summary'],
-      quiz: (data['quiz'] as List<dynamic>?)
-          ?.map((e) => QuizItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      chunkCount: data['chunkCount'],
       createdAt: '',
     );
   }
@@ -169,39 +166,87 @@ class ApiService {
     _handleError(response);
   }
 
+  // ─── Conversations ───────────────────────────────────────────
+
+  /// Create a new conversation
+  Future<Conversation> createConversation(String spaceId, {String name = "New Conversation"}) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/knowledge-spaces/$spaceId/conversations'),
+      headers: _headers,
+      body: jsonEncode({'name': name}),
+    );
+    _handleError(response);
+    return Conversation.fromJson(jsonDecode(response.body));
+  }
+
+  /// List conversations for a space
+  Future<List<Conversation>> listConversations(String spaceId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/knowledge-spaces/$spaceId/conversations'),
+      headers: _headers,
+    );
+    _handleError(response);
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((e) => Conversation.fromJson(e)).toList();
+  }
+
+  /// Update conversation name
+  Future<Conversation> updateConversation(String conversationId, String name) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/conversations/$conversationId'),
+      headers: _headers,
+      body: jsonEncode({'name': name}),
+    );
+    _handleError(response);
+    return Conversation.fromJson(jsonDecode(response.body));
+  }
+
+  /// Delete a conversation
+  Future<void> deleteConversation(String conversationId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/conversations/$conversationId'),
+      headers: _headers,
+    );
+    _handleError(response);
+  }
+
   // ─── Chat ───────────────────────────────────────────────────
 
   /// Send a chat message to the agent
   Future<Map<String, dynamic>> sendChatMessage({
-    required String knowledgeSpaceId,
+    required String conversationId,
     required String message,
-    String? conversationId,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/knowledge-spaces/$knowledgeSpaceId/chat'),
+      Uri.parse('$baseUrl/conversations/$conversationId/chat'),
       headers: _headers,
       body: jsonEncode({
         'message': message,
-        if (conversationId != null) 'conversation_id': conversationId, // ignore: use_null_aware_elements
       }),
     );
     _handleError(response);
     return jsonDecode(response.body);
   }
 
-  /// Get chat history for a knowledge space
-  Future<List<Message>> getChatHistory(String knowledgeSpaceId, {String? conversationId}) async {
-    var url = '$baseUrl/knowledge-spaces/$knowledgeSpaceId/messages';
-    if (conversationId != null) {
-      url += '?conversation_id=$conversationId';
-    }
+  /// Get chat history for a conversation
+  Future<List<Message>> getChatHistory(String conversationId) async {
     final response = await http.get(
-      Uri.parse(url),
+      Uri.parse('$baseUrl/conversations/$conversationId/messages'),
       headers: _headers,
     );
     _handleError(response);
     final List<dynamic> data = jsonDecode(response.body);
     return data.map((e) => Message.fromJson(e)).toList();
+  }
+
+  /// Export a message as a PDF
+  Future<String> exportMessagePdf(String messageId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/messages/$messageId/export-pdf'),
+      headers: _headers,
+    );
+    _handleError(response);
+    return jsonDecode(response.body)['url'] as String;
   }
 }
 
