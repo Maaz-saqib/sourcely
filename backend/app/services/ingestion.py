@@ -119,7 +119,14 @@ def run_ingestion_pipeline(
         elif source_type == "url":
             documents = _load_url(source_url)
         else:
-            raise ValueError(f"Unsupported source type: {source_type}")
+            # Fallback for all other generic file types (txt, csv, json, md, etc)
+            from langchain_community.document_loaders import TextLoader
+            temp_file_path = _download_from_supabase(storage_path)
+            try:
+                loader = TextLoader(temp_file_path, autodetect_encoding=True)
+                documents = loader.load()
+            except Exception as e:
+                raise ValueError(f"Failed to extract text from {source_type} file: {str(e)}")
 
         if not documents:
             raise ValueError("No content could be extracted from the source")
@@ -183,3 +190,21 @@ def run_ingestion_pipeline(
         # Clean up temp file
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
+
+
+def delete_source_data(source_id: str, knowledge_space_id: str, chunk_count: int, storage_path: Optional[str] = None):
+    """
+    Deletes the source chunks from ChromaDB and the raw file from Supabase Storage.
+    """
+    supabase = get_supabase_client()
+    try:
+        if storage_path:
+            supabase.storage.from_("source-files").remove([storage_path])
+        
+        if chunk_count and chunk_count > 0:
+            vectorstore = _get_chroma_collection(knowledge_space_id)
+            ids_to_delete = [f"{source_id}_chunk_{i}" for i in range(chunk_count)]
+            vectorstore.delete(ids=ids_to_delete)
+    except Exception as e:
+        print(f"Error deleting source data: {e}")
+

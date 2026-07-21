@@ -8,6 +8,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../config/theme.dart';
 import '../models/source.dart';
 import 'quiz_widget.dart';
+import 'package:provider/provider.dart';
+import '../providers/spaces_provider.dart';
 
 class SourceCard extends StatefulWidget {
   final Source source;
@@ -89,8 +91,39 @@ class _SourceCardState extends State<SourceCard> {
                       ),
                     ),
 
-                    // Status badge
-                    _StatusBadge(status: source.status),
+                    // Status badge and Delete button
+                    Row(
+                      children: [
+                        _StatusBadge(status: source.status),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: SourcelyColors.error),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete Source'),
+                                content: const Text('Are you sure you want to delete this source? This action cannot be undone.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(true),
+                                    child: const Text('Delete', style: TextStyle(color: SourcelyColors.error)),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true && context.mounted) {
+                              await context.read<SpacesProvider>().deleteSource(source.id);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ],
                 ),
 

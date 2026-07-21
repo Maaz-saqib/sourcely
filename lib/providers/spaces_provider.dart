@@ -203,6 +203,20 @@ class SpacesProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteSource(String sourceId) async {
+    try {
+      await _apiService.deleteSource(sourceId);
+      _currentSources.removeWhere((s) => s.id == sourceId);
+      notifyListeners();
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to delete source';
+      notifyListeners();
+    }
+  }
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();

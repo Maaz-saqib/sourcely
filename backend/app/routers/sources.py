@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, B
 from app.auth import get_user_id
 from app.database import get_supabase_client
 from app.models import SourceLinkCreate, SourceResponse, SourceStatusResponse
-from app.services.ingestion import run_ingestion_pipeline
+from app.services.ingestion import run_ingestion_pipeline, delete_source_data
 
 router = APIRouter(prefix="/sources", tags=["Sources"])
 
@@ -110,9 +110,8 @@ async def create_source_from_file(
     elif ext in ("docx", "doc"):
         source_type = "docx"
     else:
-        raise HTTPException(
-            status_code=400, detail="Unsupported file type. Use PDF or DOCX."
-        )
+        # Accept any other file extension generically
+        source_type = ext if ext else "unknown"
 
     source_id = str(uuid.uuid4())
 
@@ -196,3 +195,39 @@ async def get_source_status(
         summary=row.get("summary"),
         quiz=row.get("quiz"),
     )
+
+@router.delete("/{source_id}")
+async def delete_source(
+    source_id: str,
+    user_id: str = Depends(get_user_id),
+):
+    """Delete a source from Supabase and Chroma."""
+    supabase = get_supabase_client()
+
+    # Verify ownership and get source details
+    result = (
+        supabase.table("sources")
+        .select("*, knowledge_spaces!inner(user_id)")
+        .eq("id", source_id)
+        .execute()
+    )
+
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Source not found")
+
+    row = result.data[0]
+    if row.get("knowledge_spaces", {}).get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Source not found")
+
+    # Delete data (Chroma & Storage)
+    delete_source_data(
+        source_id=source_id,
+        knowledge_space_id=row["knowledge_space_id"],
+        chunk_count=row.get("chunk_count", 0),
+        storage_path=row.get("storage_path"),
+    )
+
+    # Delete from Supabase DB
+    supabase.table("sources").delete().eq("id", source_id).execute()
+
+    return {"status": "deleted"}

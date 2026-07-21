@@ -161,6 +161,13 @@ class ApiService {
       createdAt: '',
     );
   }
+  Future<void> deleteSource(String sourceId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/sources/$sourceId'),
+      headers: _headers,
+    );
+    _handleError(response);
+  }
 
   // ─── Chat ───────────────────────────────────────────────────
 

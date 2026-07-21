@@ -3,7 +3,7 @@
     "short_name": "sourcely",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
+    "background_color": "#120B29",
     "theme_color": "#0175C2",
     "description": "A web app where a user uploads or links any knowledge source and chats with it — grounded, cited answers pulled from that specific source via RAG.",
     "orientation": "portrait-primary",

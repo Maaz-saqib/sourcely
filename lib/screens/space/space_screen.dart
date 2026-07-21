@@ -78,8 +78,7 @@ class _SpaceScreenState extends State<SpaceScreen>
   Future<void> _handleFileUpload() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'docx', 'doc'],
+        type: FileType.any,
         withData: true,
         allowMultiple: true,
       );
@@ -87,9 +86,12 @@ class _SpaceScreenState extends State<SpaceScreen>
       if (result != null && result.files.isNotEmpty) {
         for (final file in result.files) {
           if (file.bytes != null && mounted) {
-            final mimeType = file.extension == 'pdf'
-                ? 'application/pdf'
-                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            String mimeType = 'application/octet-stream';
+            if (file.extension == 'pdf') {
+              mimeType = 'application/pdf';
+            } else if (file.extension == 'docx' || file.extension == 'doc') {
+              mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            }
 
             await context.read<SpacesProvider>().uploadFileSource(
                   fileName: file.name,
@@ -231,7 +233,7 @@ class _SourcesTab extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Upload PDFs, DOCX files, or add YouTube/web links',
+                            'Upload any file, or add YouTube/web links',
                             style: Theme.of(context).textTheme.bodyMedium,
                             textAlign: TextAlign.center,
                           ),

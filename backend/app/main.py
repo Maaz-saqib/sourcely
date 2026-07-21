@@ -2,6 +2,9 @@
 Sourcely Backend — FastAPI Application Entrypoint.
 Multi-source RAG knowledge assistant with agentic chat.
 """
+import os
+# Bypass corrupted locally cached huggingface tokens (fixes embedding crash)
+os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
