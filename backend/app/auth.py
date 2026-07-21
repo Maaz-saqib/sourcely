@@ -3,10 +3,9 @@ JWT Authentication middleware for Sourcely backend.
 Validates Supabase Auth JWT tokens from the Authorization header.
 """
 
-import jwt
 from fastapi import Request, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.config import get_settings
+from app.database import get_supabase_client
 
 
 security = HTTPBearer()
@@ -15,30 +14,20 @@ security = HTTPBearer()
 async def verify_jwt(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
-    """
-    Verify the JWT token from the Authorization header.
-    Returns the decoded token payload containing user_id and other claims.
-    Raises HTTPException 401 if token is invalid or expired.
-    """
-    settings = get_settings()
     token = credentials.credentials
-
+    supabase = get_supabase_client()
+    
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            options={"verify_aud": False},
-        )
-        return payload
-    except jwt.ExpiredSignatureError:
-        print("JWT EXPIRED")
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError as e:
-        print(f"JWT INVALID: {str(e)}")
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+        # Use Supabase's official method to validate the token securely
+        response = supabase.auth.get_user(token)
+        if response and response.user:
+            return {"sub": response.user.id}
+        else:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
     except Exception as e:
-        print(f"JWT UNKNOWN ERROR: {str(e)}")
+        print(f"JWT VALIDATION ERROR: {str(e)}")
+        # Fallback: if offline, you can technically decode without verification
+        # but this is safer since Supabase issues ES256 tokens now
         raise HTTPException(status_code=401, detail=f"Auth error: {str(e)}")
 
 
