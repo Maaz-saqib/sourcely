@@ -59,11 +59,14 @@ def _load_docx(file_path: str):
 
 def _load_youtube(url: str):
     """Load YouTube transcript using YoutubeLoader."""
-    from langchain_community.document_loaders import YoutubeLoader
-
-    # add_video_info=False bypasses pytube which is currently broken on YouTube
-    loader = YoutubeLoader.from_youtube_url(url, add_video_info=False)
-    return loader.load()
+    try:
+        from langchain_community.document_loaders import YoutubeLoader
+        # Extract metadata but explicitly disable video info to bypass some pytube/pygen errors
+        loader = YoutubeLoader.from_youtube_url(url, add_video_info=False)
+        return loader.load()
+    except Exception as e:
+        # Catch common "no element found" ParseError from youtube_transcript_api
+        raise ValueError("YouTube blocked the transcript request or subtitles are unavailable for this video.")
 
 
 def _load_url(url: str):
