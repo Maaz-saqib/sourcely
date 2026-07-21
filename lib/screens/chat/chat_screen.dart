@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
@@ -23,11 +24,29 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
+          if (!HardwareKeyboard.instance.isShiftPressed) {
+            _sendMessage();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+    );
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -48,6 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
 
     _messageController.clear();
+    _focusNode.requestFocus();
     _scrollToBottom();
 
     final success = await context.read<ChatProvider>().sendMessage(text);
@@ -117,6 +137,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 content: TextField(
                                   controller: controller,
                                   autofocus: true,
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: (_) => Navigator.pop(context, controller.text.trim()),
                                   decoration: const InputDecoration(
                                     hintText: 'Conversation name',
                                   ),
@@ -270,6 +292,7 @@ class _ChatScreenState extends State<ChatScreen> {
         // Input bar
         _ChatInputBar(
           controller: _messageController,
+          focusNode: _focusNode,
           onSend: _sendMessage,
         ),
       ],
@@ -279,10 +302,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
 class _ChatInputBar extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
   final VoidCallback onSend;
 
   const _ChatInputBar({
     required this.controller,
+    required this.focusNode,
     required this.onSend,
   });
 
@@ -306,6 +331,7 @@ class _ChatInputBar extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               maxLines: 4,
               minLines: 1,
               decoration: InputDecoration(

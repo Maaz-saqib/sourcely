@@ -108,6 +108,8 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
           // URL input
           TextField(
             controller: _urlController,
+            autofocus: true,
+            textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
               hintText: 'https://example.com/article or YouTube link',
               prefixIcon: Icon(
@@ -122,6 +124,10 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
           // Optional name
           TextField(
             controller: _nameController,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              if (!_isLoading) _handleSubmit();
+            },
             decoration: const InputDecoration(
               hintText: 'Display name (optional)',
               prefixIcon: Icon(Icons.label_outline, color: SourcelyColors.textLightMuted),

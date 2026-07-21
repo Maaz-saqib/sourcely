@@ -366,6 +366,8 @@ class _ConversationsPanel extends StatelessWidget {
                                       content: TextField(
                                         controller: controller,
                                         autofocus: true,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => Navigator.pop(context, controller.text.trim()),
                                         decoration: const InputDecoration(
                                           hintText: 'Conversation name',
                                         ),
