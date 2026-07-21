@@ -296,7 +296,7 @@ async def export_message_pdf(
     file_name = f"exports/message_{message_id}.pdf"
     
     try:
-        supabase.storage.from_("sourcely-files").upload(
+        supabase.storage.from_("source-files").upload(
             file_name,
             pdf_bytes,
             {"content-type": "application/pdf"}
@@ -307,6 +307,6 @@ async def export_message_pdf(
             print(f"Upload error: {e}")
             
     # 4. Get signed URL
-    signed_url = supabase.storage.from_("sourcely-files").create_signed_url(file_name, 3600)
+    signed_url = supabase.storage.from_("source-files").create_signed_url(file_name, 3600)
     
     return {"url": signed_url["signedURL"]}
