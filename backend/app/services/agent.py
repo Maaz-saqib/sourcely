@@ -13,27 +13,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 from app.config import get_settings
 
-AGENT_SYSTEM_PROMPT = """You are Sourcely, an intelligent knowledge assistant. You help users understand and explore their uploaded knowledge sources.
+AGENT_SYSTEM_PROMPT = """You are Sourcely, an intelligent, articulate, creative, and engaging AI knowledge assistant. You help users explore their uploaded knowledge sources and engage in insightful conversations.
 
-You have two tools available:
-1. **knowledge_base**: Search the user's uploaded documents (PDFs, web pages, YouTube transcripts, etc.)
-2. **web_search**: Search the web for current/external information
-
-RULES:
-- ALWAYS prefer knowledge_base FIRST when the question is about the uploaded sources.
-- Only use web_search when:
-  - The question needs information outside the uploaded sources
-  - The user explicitly asks to compare with current information
-  - knowledge_base returns no relevant results
-- ALWAYS CITE your sources:
-  - For knowledge base results: mention the source name, page number or timestamp
-  - For web results: include the URL
-- If NOTHING relevant is found in either tool, say so plainly.
-- Be concise, accurate, and helpful.
-
-FORMAT YOUR RESPONSE:
-1. Answer the question with citations inline
-2. Structure your output exactly according to the schema provided.
+RULES & BEHAVIOR:
+1. **Uploaded Knowledge Sources**: When relevant document context from the Knowledge Base is provided, prioritize it, answer accurately, and cite the source name and page/timestamp.
+2. **Web Search & General Knowledge**: If the user's question asks for external info or isn't covered in the uploaded documents, use Web Search or draw upon your extensive general knowledge.
+3. **Conversational & Casual Interaction**: For greetings ("hi", "hello"), casual chat, math, coding, or creative prompts, respond naturally, warmly, and helpfully using your core AI capabilities. Never refuse to answer or throw an error just because no documents match!
+4. **Creativity & Format**: Be engaging, articulate, structured, and insightful! Use Markdown formatting (bolding, lists, code blocks, headers) to make your answers visually clear and delightful to read.
 """
 
 class Citation(BaseModel):
@@ -44,9 +30,9 @@ class Citation(BaseModel):
     type: str = Field(..., description="'knowledge_base' or 'web'")
 
 class AgentResponse(BaseModel):
-    answer: str = Field(..., description="The complete answer to the user's question, containing inline citations.")
+    answer: str = Field(..., description="The complete, articulate answer to the user's question, containing inline citations if applicable.")
     citations: List[Citation] = Field(default_factory=list, description="List of all sources used to generate the answer.")
-    tools_used: List[str] = Field(default_factory=lambda: ["none"], description="List of tools used (e.g. 'knowledge_base', 'web_search').")
+    tools_used: List[str] = Field(default_factory=lambda: ["none"], description="List of tools used (e.g. 'knowledge_base', 'web_search', 'general_knowledge').")
 
 def _get_llm():
     settings = get_settings()
@@ -57,7 +43,7 @@ def _get_llm():
             return ChatGroq(
                 model=settings.groq_model_name,
                 api_key=settings.groq_api_key,
-                temperature=0.2
+                temperature=0.7
             )
         except Exception as e:
             print(f"Failed to init Groq: {e}")
@@ -68,12 +54,12 @@ def _get_llm():
             return ChatGoogleGenerativeAI(
                 model=settings.gemini_model_name,
                 google_api_key=settings.gemini_api_key,
-                temperature=0.2
+                temperature=0.7
             )
         except Exception as e:
             print(f"Failed to init Gemini: {e}")
             
-    raise ValueError("No valid LLM API key configured. Set GROQ_API_KEY or GEMINI_API_KEY.")
+    raise ValueError("No valid LLM API key configured. Set GROQ_API_KEY in backend/.env.")
 
 def _get_embeddings() -> HuggingFaceEmbeddings:
     settings = get_settings()
@@ -122,7 +108,7 @@ def _search_web(query: str) -> list[dict]:
             for r in results
         ]
     except Exception as e:
-        print(f"Web search error: {e}")
+        print(f"Web search error (continuing with general knowledge): {e}")
         return []
 
 def _get_source_names(knowledge_space_id: str, source_ids: list[str]) -> dict:
@@ -148,8 +134,6 @@ async def run_agent_chat(
     kb_results = _search_knowledge_base(knowledge_space_id, user_message)
     tools_used = []
     context_parts = []
-    
-    # Store minimal pre-formatted citations to help the LLM generate the structured output
     pre_citations = []
 
     if kb_results:
@@ -171,10 +155,8 @@ async def run_agent_chat(
                 "type": "knowledge_base",
             })
 
-    needs_web = len(kb_results) == 0 or (kb_results and all(r["relevance_score"] > 1.5 for r in kb_results))
     web_keywords = ["latest", "current", "recent", "news", "today", "compare", "vs", "versus", "update", "2024", "2025", "2026"]
-    if any(kw in user_message.lower() for kw in web_keywords):
-        needs_web = True
+    needs_web = (len(kb_results) == 0 and any(kw in user_message.lower() for kw in web_keywords))
 
     if needs_web:
         web_results = _search_web(user_message)
@@ -190,7 +172,11 @@ async def run_agent_chat(
                     "type": "web",
                 })
 
-    context = "\n".join(context_parts) if context_parts else "No relevant information found."
+    if not tools_used:
+        tools_used.append("general_knowledge")
+
+    context = "\n".join(context_parts) if context_parts else "No uploaded documents match this query. Answer using general intelligence and knowledge."
+    
     history_str = ""
     if chat_history:
         for msg in chat_history[-6:]:
@@ -199,37 +185,43 @@ async def run_agent_chat(
 
     prompt_template = ChatPromptTemplate.from_messages([
         ("system", AGENT_SYSTEM_PROMPT),
-        ("user", "CONTEXT FROM TOOLS:\n{context}\n\nCHAT HISTORY:\n{history_str}\n\nUSER QUESTION: {user_message}")
+        ("user", "CONTEXT FROM TOOLS / KNOWLEDGE BASE:\n{context}\n\nRECENT CHAT HISTORY:\n{history_str}\n\nUSER QUESTION: {user_message}")
     ])
 
+    llm = _get_llm()
+
     try:
-        llm = _get_llm()
         structured_llm = llm.with_structured_output(AgentResponse)
         prompt = prompt_template.invoke({
             "context": context,
             "history_str": history_str,
             "user_message": user_message
         })
-        
         result: AgentResponse = structured_llm.invoke(prompt)
-        
         return {
             "answer": result.answer,
             "citations": [c.model_dump() for c in result.citations],
             "tools_used": result.tools_used if result.tools_used else tools_used,
         }
     except Exception as e:
-        print(f"LLM Generation Error: {e}")
-        # Fallback if LLM structured output fails
-        if not tools_used:
-            tools_used = ["none"]
-            
-        answer = f"I wasn't able to find relevant information or generate a response. Error: {str(e)}"
-        if context_parts:
-            answer = f"I found relevant information but encountered an error generating a response.\n\nHere are the relevant excerpts:\n\n" + "\n".join(context_parts)
-            
-        return {
-            "answer": answer,
-            "citations": pre_citations,
-            "tools_used": tools_used,
-        }
+        print(f"Structured LLM invocation warning: {e}, using raw LLM fallback...")
+        try:
+            prompt = prompt_template.invoke({
+                "context": context,
+                "history_str": history_str,
+                "user_message": user_message
+            })
+            raw_response = llm.invoke(prompt)
+            answer_text = raw_response.content if hasattr(raw_response, 'content') else str(raw_response)
+            return {
+                "answer": answer_text,
+                "citations": pre_citations,
+                "tools_used": tools_used,
+            }
+        except Exception as err2:
+            print(f"Fallback LLM execution error: {err2}")
+            return {
+                "answer": f"I was unable to complete your request. Error: {str(err2)}",
+                "citations": [],
+                "tools_used": ["none"],
+            }

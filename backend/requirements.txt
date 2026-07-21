@@ -23,6 +23,7 @@ sentence-transformers==3.3.1
 pypdf==5.1.0
 docx2txt==0.8
 youtube-transcript-api==0.6.3
+yt-dlp
 pytube==15.0.0
 beautifulsoup4==4.12.3
 lxml==5.3.0

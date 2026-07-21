@@ -56,21 +56,63 @@ def _load_docx(file_path: str):
     return loader.load()
 
 
+def extract_youtube_video_id(url: str) -> Optional[str]:
+    """Extract 11-character YouTube video ID from any valid YouTube URL format."""
+    import re
+    pattern = r'(?:v=|\/|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})'
+    match = re.search(pattern, url)
+    return match.group(1) if match else None
+
+
 def _load_youtube(url: str):
-    """Load YouTube transcript using YoutubeLoader."""
-    try:
-        from langchain_community.document_loaders import YoutubeLoader
-        # Extract metadata but explicitly disable video info to bypass some pytube/pygen errors
-        loader = YoutubeLoader.from_youtube_url(url, add_video_info=False)
-        return loader.load()
-    except Exception as e:
-        print(f"Transcript extraction failed ({str(e)}), falling back to web scraper...")
-        # Fallback: scrape the page description/metadata instead of crashing
-        docs = _load_url(url)
-        if docs:
-            # Prepend a warning so the LLM knows it's a fallback
-            docs[0].page_content = "Note: YouTube transcript was unavailable. Ingested video metadata/description instead.\n\n" + docs[0].page_content
-        return docs
+    """
+    Load YouTube transcript using direct video ID API extraction,
+    yt-dlp metadata extraction, or web scraping fallback.
+    """
+    from langchain_core.documents import Document
+
+    video_id = extract_youtube_video_id(url)
+
+    # Tier 1: Try youtube_transcript_api directly with video ID
+    if video_id:
+        try:
+            from youtube_transcript_api import YouTubeTranscriptApi
+            api = YouTubeTranscriptApi()
+            transcript_list = api.list_transcripts(video_id)
+            try:
+                transcript = transcript_list.find_transcript(['en', 'en-US', 'es', 'fr', 'de', 'hi'])
+            except Exception:
+                transcript = next(iter(transcript_list))
+
+            fetched = transcript.fetch()
+            full_text = " ".join([item['text'] for item in fetched if 'text' in item])
+            if full_text.strip():
+                return [Document(page_content=full_text, metadata={"source_url": url, "video_id": video_id})]
+        except Exception as e:
+            print(f"Direct youtube_transcript_api failed for video ID {video_id}: {e}")
+
+    # Tier 2: Try yt-dlp metadata & subtitle extraction by video ID
+    if video_id:
+        try:
+            import yt_dlp
+            ydl_opts = {'skip_download': True, 'quiet': True}
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+                title = info.get('title', '')
+                description = info.get('description', '')
+                uploader = info.get('uploader', '')
+                content = f"YouTube Video Title: {title}\nChannel: {uploader}\n\nDescription:\n{description}"
+                if title or description:
+                    return [Document(page_content=content, metadata={"source_url": url, "video_id": video_id})]
+        except Exception as e:
+            print(f"yt-dlp extraction failed for video ID {video_id}: {e}")
+
+    # Tier 3: Fallback web scraper
+    print("Falling back to web page scraping for YouTube URL...")
+    docs = _load_url(url)
+    if docs:
+        docs[0].page_content = "Note: Ingested YouTube video page metadata/description.\n\n" + docs[0].page_content
+    return docs
 
 
 def _load_url(url: str):

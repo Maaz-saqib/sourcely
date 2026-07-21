@@ -44,14 +44,9 @@ def generate_summary_and_quiz(full_text: str) -> dict:
     truncated_text = full_text[:max_chars] if len(full_text) > max_chars else full_text
 
     try:
-        from langchain_huggingface import HuggingFaceEndpoint
+        from app.services.agent import _get_llm
 
-        llm = HuggingFaceEndpoint(
-            repo_id=settings.llm_model_name,
-            huggingfacehub_api_token=settings.huggingface_api_token,
-            max_new_tokens=2048,
-            temperature=0.3,
-        )
+        llm = _get_llm()
 
         prompt = f"""You are an expert content analyst. Analyze the following text and provide:
 
