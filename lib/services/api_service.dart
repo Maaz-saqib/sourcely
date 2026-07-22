@@ -236,7 +236,7 @@ class ApiService {
       headers: _headers,
       body: jsonEncode({
         'message': message,
-        ?'mentioned_source_ids': mentionedSourceIds,
+        'mentioned_source_ids': ?mentionedSourceIds,
       }),
     ));
     return jsonDecode(response.body);
