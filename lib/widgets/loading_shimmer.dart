@@ -2,6 +2,7 @@
 /// Animated placeholder for content loading states.
 library;
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -146,6 +147,7 @@ class _DotAnimationState extends State<_DotAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -158,13 +160,14 @@ class _DotAnimationState extends State<_DotAnimation>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    Future.delayed(Duration(milliseconds: widget.delay), () {
+    _timer = Timer(Duration(milliseconds: widget.delay), () {
       if (mounted) _controller.repeat(reverse: true);
     });
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _controller.dispose();
     super.dispose();
   }
