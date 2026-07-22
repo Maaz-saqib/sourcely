@@ -384,7 +384,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: filteredSources.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (context, _) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final source = filteredSources[index];
                     return ListTile(

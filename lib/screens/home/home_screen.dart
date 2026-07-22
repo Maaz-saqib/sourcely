@@ -7,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
-import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/spaces_provider.dart';
 import '../../providers/theme_provider.dart';

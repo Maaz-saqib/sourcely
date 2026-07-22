@@ -75,6 +75,60 @@ class _SpaceScreenState extends State<SpaceScreen>
     );
   }
 
+  void _showUnsupportedFileDialog(String ext) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Unsupported File Type'),
+          ],
+        ),
+        content: Text(
+          'The file type "${ext.isEmpty ? 'unknown' : '.$ext'}" is currently not supported.\n\n'
+          'Please upload a file in one of the following formats:\n'
+          '• Documents: PDF, DOCX, DOC\n'
+          '• Spreadsheets: CSV, XLSX\n'
+          '• Images: JPG, JPEG, PNG',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUploadErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Upload Failed'),
+          ],
+        ),
+        content: Text(
+          'We encountered an issue while uploading your file:\n\n'
+          '$error\n\n'
+          'Please check your connection and try again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleFileUpload() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -88,7 +142,14 @@ class _SpaceScreenState extends State<SpaceScreen>
         for (final file in result.files) {
           if (file.bytes != null && mounted) {
             String mimeType = 'application/octet-stream';
-            final ext = file.extension?.toLowerCase();
+            final ext = file.extension?.toLowerCase() ?? '';
+            
+            // Validate extension
+            if (!['pdf', 'docx', 'doc', 'csv', 'jpg', 'jpeg', 'png', 'xlsx'].contains(ext)) {
+              _showUnsupportedFileDialog(ext);
+              continue;
+            }
+
             if (ext == 'pdf') {
               mimeType = 'application/pdf';
             } else if (ext == 'docx' || ext == 'doc') {
@@ -99,6 +160,8 @@ class _SpaceScreenState extends State<SpaceScreen>
               mimeType = 'image/jpeg';
             } else if (ext == 'png') {
               mimeType = 'image/png';
+            } else if (ext == 'xlsx') {
+              mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
             }
 
             await context.read<SpacesProvider>().uploadFileSource(
@@ -111,9 +174,15 @@ class _SpaceScreenState extends State<SpaceScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload file: $e')),
-        );
+        String errorMessage = e.toString();
+        // Try to strip exception type if present, or format nicely
+        if (errorMessage.startsWith('ApiException')) {
+          final parts = errorMessage.split(': ');
+          if (parts.length > 1) {
+            errorMessage = parts.sublist(1).join(': ');
+          }
+        }
+        _showUploadErrorDialog(errorMessage);
       }
     }
   }

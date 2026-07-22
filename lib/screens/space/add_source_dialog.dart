@@ -18,7 +18,7 @@ class AddSourceDialog extends StatefulWidget {
 class _AddSourceDialogState extends State<AddSourceDialog> {
   final _urlController = TextEditingController();
   final _nameController = TextEditingController();
-  String _sourceType = 'url';
+  final String _sourceType = 'url';
   bool _isLoading = false;
 
   @override
@@ -180,46 +180,3 @@ class _AddSourceDialogState extends State<AddSourceDialog> {
   }
 }
 
-class _TypeChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _TypeChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? SourcelyColors.primary.withValues(alpha: 0.15)
-              : SourcelyColors.surfaceLight,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? SourcelyColors.primary.withValues(alpha: 0.5)
-                : SourcelyColors.borderLight,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected
-                ? SourcelyColors.secondary
-                : SourcelyColors.textLightSecondary,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-}
