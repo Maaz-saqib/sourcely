@@ -1,187 +1,135 @@
-# Sourcely — Multi-Source RAG Knowledge Assistant
+# Sourcely 🧠
 
-A full-stack agentic RAG knowledge assistant. Upload PDFs, DOCX files, YouTube videos, or website URLs into **Knowledge Spaces**, then chat with an AI agent that searches your sources (and optionally the web) to give you cited, grounded answers.
+**Sourcely** is an intelligent, cross-platform knowledge assistant built with **Flutter** and **FastAPI**. It empowers users to create isolated "Knowledge Spaces," upload various document formats, and interact with a powerful AI agent using Retrieval-Augmented Generation (RAG). 
 
-## ✨ Features
+Whether you're analyzing resumes, summarizing YouTube videos, or extracting data from spreadsheets, Sourcely brings your documents to life through natural language conversation.
 
-- **Multi-Source Knowledge Spaces** — Organize and query across multiple sources at once
-- **Auto-Summary & Quiz** — Every ingested source gets an AI-generated summary and quiz questions
-- **Cited Answers** — Every response cites its sources (document + page, or web URL)
-- **Agentic Chat** — AI decides whether to search your knowledge base, the web, or both
-- **Tool Transparency** — Each answer shows which tools (Knowledge Base / Web Search) were used
+---
 
-## 🏗️ Architecture
+## 🌟 Key Features
 
+- **Knowledge Spaces**: Organize your documents into distinct projects or topics (capped at 6 sources per space to maintain high performance).
+- **Multi-Modal Ingestion**: Support for PDFs, Word Documents (.docx), Spreadsheets (.csv, .xlsx), Web Links, and YouTube URLs.
+- **Agentic RAG Chat**: Chat intelligently with your documents. The AI retrieves highly relevant context using ChromaDB and HuggingFace embeddings.
+- **Explicit Mentions**: Use the `@` symbol in chat to force the AI to only consider specific uploaded sources for highly targeted, precise answers.
+- **Strict Output Formatting**: Ask for bullet points, tables, or summaries, and the AI strictly adheres to the requested format—dropping all unnecessary conversational fluff.
+- **Robust Exception Handling**: Professional, user-friendly dialogs prevent unsupported file types and handle backend errors gracefully.
+
+---
+
+## 🛠️ Architecture & Working Flow
+
+The following flowchart illustrates how data moves through Sourcely, from the moment a user uploads a file to when the AI delivers an answer.
+
+```mermaid
+flowchart TD
+    %% Define Node Styles
+    classDef frontend fill:#02569B,stroke:#000,stroke-width:2px,color:#fff;
+    classDef backend fill:#009688,stroke:#000,stroke-width:2px,color:#fff;
+    classDef storage fill:#FF9800,stroke:#000,stroke-width:2px,color:#fff;
+    classDef ai fill:#673AB7,stroke:#000,stroke-width:2px,color:#fff;
+
+    %% Nodes
+    User([User interacts with App])
+    UI[Flutter Frontend\nUI & State Mgmt]:::frontend
+    Auth{Supabase Auth\nIs Logged In?}:::storage
+    
+    API[FastAPI Backend\nREST API]:::backend
+    Ingestion[Document Ingestion\nText Extraction & Chunking]:::backend
+    
+    SupabaseDB[(Supabase SQL\nMetadata & Links)]:::storage
+    ChromaDB[(ChromaDB\nVector Store)]:::storage
+    
+    LLM{LangChain Agent\nTool Calling}:::ai
+    Response([Formatted AI Response])
+
+    %% Flow
+    User -->|Uploads PDF, CSV, or URL| UI
+    UI -->|Checks Auth| Auth
+    Auth -- Yes --> API
+    Auth -- No --> UI
+    
+    API -->|1. Save Metadata| SupabaseDB
+    API -->|2. Kick off background task| Ingestion
+    
+    Ingestion -->|Extract text using PyPDF/OpenPyxl/YouTubeTranscriptApi| Ingestion
+    Ingestion -->|Create HuggingFace Embeddings| ChromaDB
+    
+    User -->|Sends Chat Message\n(Optionally @mentions sources)| UI
+    UI -->|POST /chat| API
+    API --> LLM
+    
+    LLM -->|Queries Vector DB\n(Filters by @mention if used)| ChromaDB
+    ChromaDB -->|Returns Context Snippets| LLM
+    LLM -->|Generates Answer based on System Prompt| Response
+    Response --> UI
 ```
-┌─────────────────┐       HTTPS        ┌──────────────────────┐
-│ Flutter App      │ ──────────────────▶│   FastAPI Backend     │
-│ (Web / Android)  │◀────────────────── │   + Agent Layer       │
-└─────────────────┘                     └───────┬──────────────┘
-                                                │
-         ┌──────────────┬──────────┬────────────┼───────────────┐
-         ▼              ▼          ▼            ▼               ▼
-   ┌───────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-   │ Supabase  │ │  Chroma  │ │ HF API   │ │ DuckDuck │ │ Retriever│
-   │(Auth, DB, │ │ (Vector  │ │(LLM +    │ │ Go Search│ │   Tool   │
-   │ Storage)  │ │   DB)    │ │Embedding)│ │          │ │          │
-   └───────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘
-```
 
-## 🚀 Quick Start
+---
+
+## 💻 Tech Stack
+
+### Frontend (Mobile & Web)
+- **Framework**: Flutter (Dart)
+- **State Management**: Provider
+- **File Handling**: `file_picker`
+- **UI/UX**: Custom Material 3 theme, sleek dialogs, micro-animations (`flutter_animate`).
+
+### Backend (API & AI)
+- **Framework**: FastAPI (Python)
+- **Agent Orchestration**: LangChain
+- **Vector Database**: ChromaDB
+- **Embeddings**: HuggingFace (`sentence-transformers`)
+- **Database & Auth**: Supabase (PostgreSQL)
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
+- [Flutter SDK](https://flutter.dev/docs/get-started/install)
+- [Python 3.10+](https://www.python.org/downloads/)
+- A [Supabase](https://supabase.com/) Project
 
-- **Python 3.10+** and `pip`
-- **Flutter 3.10+**
-- **Supabase** project (free tier)
-- **Hugging Face** API token (free)
+### Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Set up your `.env` file with your Supabase credentials and LLM API keys.
+5. Run the server:
+   ```bash
+   ./start_backend.sh
+   # OR: fastapi dev app/main.py
+   ```
 
-### 1. Supabase Setup
+### Frontend Setup
+1. Navigate to the root directory.
+2. Install Flutter packages:
+   ```bash
+   flutter pub get
+   ```
+3. Run the application:
+   ```bash
+   flutter run
+   ```
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to **Authentication** → **Providers** → Enable **Email** sign-up
-3. Go to **Storage** → Create a new bucket named `source-files` (private)
-4. Go to **SQL Editor** → Run the migration script:
+---
 
-```bash
-# Copy and paste the contents of backend/db/migration.sql into the SQL Editor
-```
+## 🎯 System Prompt Guidelines
 
-5. Note down from **Settings** → **API**:
-   - Project URL
-   - `anon` public key
-   - `service_role` secret key
-   - JWT Secret (Settings → API → JWT Settings)
+Sourcely's AI is governed by strict system prompts to ensure a premium, predictable experience:
+1. **Default Formatting**: Uses **Bold Titles** and clean paragraphs.
+2. **User Overrides**: When users request specific structures (e.g., "bullet points only"), the AI completely drops introductory filler and titles, delivering exact formats instantly.
 
-### 2. Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your actual keys:
-#   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
-#   SUPABASE_JWT_SECRET, HUGGINGFACE_API_TOKEN
-
-# Run the backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`. Check `http://localhost:8000/docs` for the interactive API docs.
-
-### 3. Flutter Frontend Setup
-
-```bash
-# From the project root
-cd /path/to/sourcely
-
-# Install dependencies
-flutter pub get
-
-# Update Supabase config
-# Edit lib/config/constants.dart with your Supabase URL and anon key
-# Or pass them as dart-define:
-# flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
-
-# Run on Web
-flutter run -d chrome
-
-# Run on Android
-flutter run -d android
-
-# Build for Web (production)
-flutter build web --release
-
-# Build for Android (APK)
-flutter build apk --release
-```
-
-## 📁 Project Structure
-
-```
-sourcely/
-├── backend/                    # Python FastAPI backend
-│   ├── app/
-│   │   ├── main.py            # FastAPI entrypoint
-│   │   ├── config.py          # Settings (env vars)
-│   │   ├── auth.py            # JWT verification
-│   │   ├── database.py        # Supabase client
-│   │   ├── models.py          # Pydantic schemas
-│   │   ├── routers/
-│   │   │   ├── knowledge_spaces.py  # CRUD for spaces
-│   │   │   ├── sources.py          # Upload & status
-│   │   │   └── chat.py             # Agentic chat
-│   │   └── services/
-│   │       ├── ingestion.py        # Document processing pipeline
-│   │       ├── summary_quiz.py     # Auto-summary & quiz gen
-│   │       └── agent.py            # RAG agent with tools
-│   ├── db/
-│   │   └── migration.sql      # Supabase schema
-│   ├── requirements.txt
-│   └── .env.example
-│
-├── lib/                        # Flutter frontend
-│   ├── main.dart              # App entrypoint
-│   ├── config/
-│   │   ├── theme.dart         # Dark theme + design system
-│   │   └── constants.dart     # API URLs, config
-│   ├── models/                # Data models
-│   ├── services/              # Auth, API, storage services
-│   ├── providers/             # State management
-│   ├── screens/               # Full-page views
-│   └── widgets/               # Reusable UI components
-│
-├── android/                    # Android platform files
-├── web/                        # Web platform files
-├── pubspec.yaml               # Flutter dependencies
-└── README.md
-```
-
-## 🔑 Environment Variables
-
-### Backend (.env)
-
-| Variable | Description |
-|---|---|
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
-| `SUPABASE_JWT_SECRET` | JWT secret from Supabase settings |
-| `HUGGINGFACE_API_TOKEN` | HuggingFace API token |
-| `CHROMA_PERSIST_DIR` | Directory for Chroma DB persistence (default: `./chroma_data`) |
-| `LLM_MODEL_NAME` | HF model for chat (default: `mistralai/Mistral-7B-Instruct-v0.3`) |
-| `EMBEDDINGS_MODEL_NAME` | HF embeddings model (default: `sentence-transformers/all-MiniLM-L6-v2`) |
-
-### Frontend
-
-Update `lib/config/constants.dart` or pass via `--dart-define`:
-
-| Variable | Description |
-|---|---|
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anon/public key |
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | Flutter (Web + Android) |
-| Backend | Python + FastAPI |
-| Orchestration | LangChain (Python) |
-| LLM | HuggingFace Inference API |
-| Embeddings | sentence-transformers/all-MiniLM-L6-v2 |
-| Vector Store | Chroma (local persistent) |
-| Web Search | DuckDuckGo (no API key) |
-| Auth + DB + Storage | Supabase (Postgres) |
-
-## 📝 License
-
-MIT
+---
+*Developed by Muhammad Maaz Saqib.*
