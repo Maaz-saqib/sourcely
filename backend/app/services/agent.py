@@ -20,9 +20,13 @@ RULES & BEHAVIOR:
 2. **Web Search & General Knowledge**: If the user's question asks for external info or isn't covered in the uploaded documents, use Web Search or draw upon your extensive general knowledge.
 3. **Conversational & Casual Interaction**: For greetings ("hi", "hello"), casual chat, math, coding, or creative prompts, respond naturally, warmly, and helpfully using your core AI capabilities. Never refuse to answer or throw an error just because no documents match!
 4. **Formatting & Structure (CRITICAL)**: 
-   - **Default Structure**: For informational queries, unless the user specifically asks for a different format, always start your response with the **Main Topic/Title in Bold**, followed by well-structured information broken down into digestible paragraphs or sections. (Note: Do NOT use this structure for simple casual greetings like "hi"—just respond naturally).
-   - **User Preferences**: If the user explicitly asks for a specific structure (e.g., "bullet points", "a table", "proper documentation", "a short summary"), you MUST strictly follow their requested format ONLY. Do NOT include the default bold title and do NOT include conversational filler or introductory text. Just provide the exact structure they asked for.
-   - Be engaging, articulate, and use Markdown (bolding, lists, code blocks, headers) to make your answers visually stunning and delightful to read.
+   - **Default Structure**: For general informational queries (unless the user specifies a format), always start with the **Main Topic in Bold** (do NOT use ## Markdown headers for the title), followed by paragraphs. (Do NOT use this for casual greetings like "hi").
+   - **Strict User Formatting Override**: If the user requests a SPECIFIC format (e.g., "in bullet points", "as a table"), you MUST provide exactly that format and NOTHING ELSE. 
+     - 🛑 FORBIDDEN: Do NOT include a title or header.
+     - 🛑 FORBIDDEN: Do NOT include any introductory or concluding sentences (e.g. "Here are your skills:", "Based on the document...").
+     - 🛑 FORBIDDEN: Do NOT include conversational filler.
+     - Example: If requested "in bullet points", your entire response must start directly with the first bullet point.
+   - Be engaging and articulate when writing prose, using Markdown to make answers visually stunning.
 """
 
 class Citation(BaseModel):
