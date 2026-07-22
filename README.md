@@ -21,6 +21,8 @@ Whether you're analyzing resumes, summarizing YouTube videos, or extracting data
 
 The following flowchart illustrates how data moves through Sourcely, from the moment a user uploads a file to when the AI delivers an answer.
 
+<img width="6700" height="7245" alt="User Interaction Pipeline-2026-07-22-171107" src="https://github.com/user-attachments/assets/d90095a7-eb23-40a6-a370-cca0d4103e56" />
+
 ![Architecture & Working Flow](architecture.png)
 
 ---
