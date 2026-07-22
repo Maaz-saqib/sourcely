@@ -154,7 +154,7 @@ class ChatProvider extends ChangeNotifier {
   }
 
   /// Send a message to the agent
-  Future<bool> sendMessage(String message) async {
+  Future<bool> sendMessage(String message, {List<String>? mentionedSourceIds}) async {
     if (_currentSpaceId == null) return false;
 
     _isSending = true;
@@ -189,6 +189,7 @@ class ChatProvider extends ChangeNotifier {
       final response = await _apiService.sendChatMessage(
         conversationId: _currentConversation!.id,
         message: message,
+        mentionedSourceIds: mentionedSourceIds,
       );
 
       // Build assistant message

@@ -39,3 +39,6 @@ langchain-google-genai
 reportlab
 easyocr
 opencv-python-headless==4.10.0.84
+chardet
+pandas
+openpyxl

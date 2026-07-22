@@ -165,6 +165,17 @@ def _load_csv(file_path: str):
     return loader.load()
 
 
+def _load_xlsx(file_path: str):
+    """Load XLSX content using pandas."""
+    import pandas as pd
+    from langchain_core.documents import Document
+    
+    df = pd.read_excel(file_path)
+    # Convert dataframe to a readable string format
+    text_content = df.to_string(index=False)
+    return [Document(page_content=text_content, metadata={"source": file_path})]
+
+
 def _load_image(file_path: str):
     """Load Image content by extracting text with local EasyOCR."""
     import easyocr
@@ -218,6 +229,9 @@ def run_ingestion_pipeline(
         elif source_type == "csv":
             temp_file_path = _download_from_supabase(storage_path)
             documents = _load_csv(temp_file_path)
+        elif source_type == "xlsx":
+            temp_file_path = _download_from_supabase(storage_path)
+            documents = _load_xlsx(temp_file_path)
         elif source_type in ["jpg", "jpeg", "png"]:
             temp_file_path = _download_from_supabase(storage_path)
             documents = _load_image(temp_file_path)

@@ -69,7 +69,7 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
         encode_kwargs={"normalize_embeddings": True},
     )
 
-def _search_knowledge_base(knowledge_space_id: str, query: str, k: int = 4) -> list[dict]:
+def _search_knowledge_base(knowledge_space_id: str, query: str, k: int = 4, mentioned_source_ids: Optional[list[str]] = None) -> list[dict]:
     settings = get_settings()
     embeddings = _get_embeddings()
     try:
@@ -78,7 +78,18 @@ def _search_knowledge_base(knowledge_space_id: str, query: str, k: int = 4) -> l
             embedding_function=embeddings,
             persist_directory=settings.chroma_persist_dir,
         )
-        results = vectorstore.similarity_search_with_score(query, k=k)
+        
+        filter_args = None
+        if mentioned_source_ids:
+            if len(mentioned_source_ids) == 1:
+                filter_args = {"source_id": mentioned_source_ids[0]}
+            else:
+                filter_args = {"source_id": {"$in": mentioned_source_ids}}
+                
+        if filter_args:
+            results = vectorstore.similarity_search_with_score(query, k=k, filter=filter_args)
+        else:
+            results = vectorstore.similarity_search_with_score(query, k=k)
         search_results = []
         for doc, score in results:
             search_results.append({
@@ -130,8 +141,9 @@ async def run_agent_chat(
     knowledge_space_id: str,
     user_message: str,
     chat_history: list[dict],
+    mentioned_source_ids: Optional[list[str]] = None,
 ) -> dict:
-    kb_results = _search_knowledge_base(knowledge_space_id, user_message)
+    kb_results = _search_knowledge_base(knowledge_space_id, user_message, mentioned_source_ids=mentioned_source_ids)
     tools_used = []
     context_parts = []
     pre_citations = []

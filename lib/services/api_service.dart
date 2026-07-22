@@ -229,12 +229,14 @@ class ApiService {
   Future<Map<String, dynamic>> sendChatMessage({
     required String conversationId,
     required String message,
+    List<String>? mentionedSourceIds,
   }) async {
     final response = await _execute(() => http.post(
       Uri.parse('$baseUrl/conversations/$conversationId/chat'),
       headers: _headers,
       body: jsonEncode({
         'message': message,
+        if (mentionedSourceIds != null) 'mentioned_source_ids': mentionedSourceIds,
       }),
     ));
     return jsonDecode(response.body);

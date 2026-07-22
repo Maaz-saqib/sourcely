@@ -122,6 +122,8 @@ async def create_source_from_file(
         source_type = "docx"
     elif ext == "csv":
         source_type = "csv"
+    elif ext == "xlsx":
+        source_type = "xlsx"
     elif ext in ("jpg", "jpeg", "png"):
         source_type = ext # The ingestion pipeline handles ['jpg', 'jpeg', 'png'] directly
     else:

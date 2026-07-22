@@ -86,6 +86,7 @@ class ConversationResponse(BaseModel):
 class ChatRequest(BaseModel):
     """Request body for sending a chat message."""
     message: str = Field(..., min_length=1)
+    mentioned_source_ids: Optional[list[str]] = None
 
 
 class Citation(BaseModel):

@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/spaces_provider.dart';
+import '../../models/source.dart';
 import '../../widgets/chat_bubble.dart';
 import '../../widgets/loading_shimmer.dart';
 
@@ -26,9 +28,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
   late final FocusNode _focusNode;
 
+  String? _mentionQuery;
+  final Set<Source> _activeMentions = {};
+
   @override
   void initState() {
     super.initState();
+    _messageController.addListener(_onTextChanged);
     _focusNode = FocusNode(
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
@@ -42,8 +48,57 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _onTextChanged() {
+    final text = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
+    
+    if (cursorPosition >= 0 && cursorPosition <= text.length) {
+      final textBeforeCursor = text.substring(0, cursorPosition);
+      final words = textBeforeCursor.split(RegExp(r'\s+'));
+      if (words.isNotEmpty) {
+        final lastWord = words.last;
+        if (lastWord.startsWith('@')) {
+          setState(() {
+            _mentionQuery = lastWord.substring(1).toLowerCase();
+          });
+          return;
+        }
+      }
+    }
+    
+    if (_mentionQuery != null) {
+      setState(() {
+        _mentionQuery = null;
+      });
+    }
+  }
+
+  void _onSourceMentioned(Source source) {
+    final text = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
+    final textBeforeCursor = text.substring(0, cursorPosition);
+    final words = textBeforeCursor.split(RegExp(r'\s+'));
+    final lastWord = words.last;
+
+    final startIdx = cursorPosition - lastWord.length;
+    final formattedName = source.displayName.replaceAll(" ", "_");
+    final newText = text.replaceRange(startIdx, cursorPosition, '@$formattedName ');
+    
+    _messageController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: startIdx + ('@$formattedName ').length),
+    );
+    
+    _activeMentions.add(source);
+    setState(() {
+      _mentionQuery = null;
+    });
+    _focusNode.requestFocus();
+  }
+
   @override
   void dispose() {
+    _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -66,11 +121,20 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
+    final mentionedSourceIds = _activeMentions
+        .where((s) => text.contains('@${s.displayName.replaceAll(" ", "_")}'))
+        .map((s) => s.id)
+        .toList();
+
     _messageController.clear();
+    _activeMentions.clear();
     _focusNode.requestFocus();
     _scrollToBottom();
 
-    final success = await context.read<ChatProvider>().sendMessage(text);
+    final success = await context.read<ChatProvider>().sendMessage(
+      text,
+      mentionedSourceIds: mentionedSourceIds.isNotEmpty ? mentionedSourceIds : null,
+    );
     if (success) {
       _scrollToBottom();
     }
@@ -288,6 +352,57 @@ class _ChatScreenState extends State<ChatScreen> {
             return const SizedBox.shrink();
           },
         ),
+
+        // Mention Overlay List
+        if (_mentionQuery != null)
+          Consumer<SpacesProvider>(
+            builder: (context, spacesProvider, _) {
+              final sources = spacesProvider.currentSources;
+              final filteredSources = sources.where((s) {
+                final name = s.displayName.toLowerCase();
+                return name.contains(_mentionQuery!);
+              }).toList();
+
+              if (filteredSources.isEmpty) return const SizedBox.shrink();
+
+              return Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: filteredSources.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final source = filteredSources[index];
+                    return ListTile(
+                      dense: true,
+                      leading: Text(source.typeIcon, style: const TextStyle(fontSize: 18)),
+                      title: Text(
+                        source.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                      ),
+                      onTap: () => _onSourceMentioned(source),
+                    );
+                  },
+                ),
+              ).animate().slideY(begin: 0.2, duration: 200.ms).fadeIn();
+            },
+          ),
 
         // Input bar
         _ChatInputBar(

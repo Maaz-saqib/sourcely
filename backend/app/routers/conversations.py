@@ -165,6 +165,7 @@ async def chat_in_conversation(
             knowledge_space_id=space_id,
             user_message=body.message,
             chat_history=chat_history,
+            mentioned_source_ids=body.mentioned_source_ids,
         )
     except Exception as e:
         raise ExternalServiceError(f"Agent error: {str(e)}")

@@ -78,7 +78,8 @@ class _SpaceScreenState extends State<SpaceScreen>
   Future<void> _handleFileUpload() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'docx', 'doc', 'csv', 'jpg', 'jpeg', 'png', 'xlsx'],
         withData: true,
         allowMultiple: true,
       );
