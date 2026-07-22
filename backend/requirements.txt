@@ -37,3 +37,5 @@ cryptography==43.0.3
 langchain-groq
 langchain-google-genai
 reportlab
+easyocr
+opencv-python-headless==4.10.0.84

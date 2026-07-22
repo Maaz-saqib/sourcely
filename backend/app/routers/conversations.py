@@ -5,7 +5,7 @@ Handles creating/managing conversations, sending chat messages, and getting hist
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, Body
 
 from app.auth import get_user_id
 from app.database import get_supabase_client
@@ -18,6 +18,7 @@ from app.models import (
     MessageResponse
 )
 from app.services.agent import run_agent_chat
+from app.exceptions import ResourceNotFoundError, ExternalServiceError, DatabaseError
 
 router = APIRouter(tags=["Conversations"])
 
@@ -35,7 +36,7 @@ async def create_conversation(
     # Verify ownership
     space = supabase.table("knowledge_spaces").select("id").eq("id", space_id).eq("user_id", user_id).execute()
     if not space.data:
-        raise HTTPException(status_code=404, detail="Knowledge space not found")
+        raise ResourceNotFoundError("Knowledge space not found")
 
     conversation_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
@@ -62,7 +63,7 @@ async def list_conversations(
     # Verify ownership
     space = supabase.table("knowledge_spaces").select("id").eq("id", space_id).eq("user_id", user_id).execute()
     if not space.data:
-        raise HTTPException(status_code=404, detail="Knowledge space not found")
+        raise ResourceNotFoundError("Knowledge space not found")
 
     result = supabase.table("conversations").select("*").eq("knowledge_space_id", space_id).order("updated_at", desc=True).execute()
     return result.data
@@ -79,12 +80,12 @@ async def update_conversation(
     # Verify ownership via join or just checking if conversation exists and space is owned by user
     convo = supabase.table("conversations").select("knowledge_space_id").eq("id", conversation_id).execute()
     if not convo.data:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise ResourceNotFoundError("Conversation not found")
         
     space_id = convo.data[0]["knowledge_space_id"]
     space = supabase.table("knowledge_spaces").select("id").eq("id", space_id).eq("user_id", user_id).execute()
     if not space.data:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ResourceNotFoundError("Conversation not found")
 
     now = datetime.now(timezone.utc).isoformat()
     result = supabase.table("conversations").update({"name": body.name, "updated_at": now}).eq("id", conversation_id).execute()
@@ -100,12 +101,12 @@ async def delete_conversation(
     
     convo = supabase.table("conversations").select("knowledge_space_id").eq("id", conversation_id).execute()
     if not convo.data:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise ResourceNotFoundError("Conversation not found")
         
     space_id = convo.data[0]["knowledge_space_id"]
     space = supabase.table("knowledge_spaces").select("id").eq("id", space_id).eq("user_id", user_id).execute()
     if not space.data:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ResourceNotFoundError("Conversation not found")
 
     supabase.table("conversations").delete().eq("id", conversation_id).execute()
     return {"status": "success"}
@@ -123,12 +124,12 @@ async def chat_in_conversation(
 
     convo = supabase.table("conversations").select("knowledge_space_id").eq("id", conversation_id).execute()
     if not convo.data:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise ResourceNotFoundError("Conversation not found")
         
     space_id = convo.data[0]["knowledge_space_id"]
     space = supabase.table("knowledge_spaces").select("id").eq("id", space_id).eq("user_id", user_id).execute()
     if not space.data:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ResourceNotFoundError("Conversation not found")
 
     now = datetime.now(timezone.utc).isoformat()
 
@@ -166,7 +167,7 @@ async def chat_in_conversation(
             chat_history=chat_history,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
+        raise ExternalServiceError(f"Agent error: {str(e)}")
 
     # Save assistant message
     assistant_msg_id = str(uuid.uuid4())
@@ -200,12 +201,12 @@ async def get_messages(
 
     convo = supabase.table("conversations").select("knowledge_space_id").eq("id", conversation_id).execute()
     if not convo.data:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise ResourceNotFoundError("Conversation not found")
         
     space_id = convo.data[0]["knowledge_space_id"]
     space = supabase.table("knowledge_spaces").select("id").eq("id", space_id).eq("user_id", user_id).execute()
     if not space.data:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ResourceNotFoundError("Conversation not found")
 
     messages_result = (
         supabase.table("messages")
@@ -244,12 +245,12 @@ async def export_message_pdf(
     # 1. Fetch message and verify ownership
     msg = supabase.table("messages").select("*, conversations!inner(knowledge_space_id)").eq("id", message_id).execute()
     if not msg.data:
-        raise HTTPException(status_code=404, detail="Message not found")
+        raise ResourceNotFoundError("Message not found")
         
     space_id = msg.data[0]["conversations"]["knowledge_space_id"]
     space = supabase.table("knowledge_spaces").select("id").eq("id", space_id).eq("user_id", user_id).execute()
     if not space.data:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ResourceNotFoundError("Message not found")
 
     message_data = msg.data[0]
     

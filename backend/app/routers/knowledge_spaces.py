@@ -5,7 +5,7 @@ Handles CRUD operations for knowledge spaces.
 
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from app.auth import get_user_id
 from app.database import get_supabase_client
@@ -15,6 +15,7 @@ from app.models import (
     KnowledgeSpaceDetail,
     SourceResponse,
 )
+from app.exceptions import DatabaseError, ResourceNotFoundError
 
 router = APIRouter(prefix="/knowledge-spaces", tags=["Knowledge Spaces"])
 
@@ -39,7 +40,7 @@ async def create_knowledge_space(
     result = supabase.table("knowledge_spaces").insert(data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create knowledge space")
+        raise DatabaseError("Failed to create knowledge space")
 
     row = result.data[0]
     return KnowledgeSpaceResponse(
@@ -110,7 +111,7 @@ async def get_knowledge_space(
     )
 
     if not result.data:
-        raise HTTPException(status_code=404, detail="Knowledge space not found")
+        raise ResourceNotFoundError("Knowledge space not found")
 
     row = result.data[0]
 
@@ -179,7 +180,7 @@ async def delete_knowledge_space(
     )
 
     if not result.data:
-        raise HTTPException(status_code=404, detail="Knowledge space not found")
+        raise ResourceNotFoundError("Knowledge space not found")
 
     # Delete sources first (cascade)
     supabase.table("sources").delete().eq("knowledge_space_id", space_id).execute()

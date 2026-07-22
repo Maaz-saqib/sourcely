@@ -11,6 +11,7 @@ from app.auth import get_user_id
 from app.database import get_supabase_client
 from app.models import SourceLinkCreate, SourceResponse, SourceStatusResponse
 from app.services.ingestion import run_ingestion_pipeline, delete_source_data
+from app.exceptions import ResourceNotFoundError, DatabaseError, ExternalServiceError
 
 router = APIRouter(prefix="/sources", tags=["Sources"])
 
@@ -36,7 +37,7 @@ async def create_source_from_link(
         .execute()
     )
     if not space.data:
-        raise HTTPException(status_code=404, detail="Knowledge space not found")
+        raise ResourceNotFoundError("Knowledge space not found")
 
     # Enforce 6 source cap
     count_result = supabase.table("sources").select("id", count="exact").eq("knowledge_space_id", body.knowledge_space_id).execute()
@@ -59,7 +60,7 @@ async def create_source_from_link(
     result = supabase.table("sources").insert(data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create source")
+        raise DatabaseError("Failed to create source")
 
     # Kick off ingestion in the background
     background_tasks.add_task(
@@ -104,7 +105,7 @@ async def create_source_from_file(
         .execute()
     )
     if not space.data:
-        raise HTTPException(status_code=404, detail="Knowledge space not found")
+        raise ResourceNotFoundError("Knowledge space not found")
 
     # Enforce 6 source cap
     count_result = supabase.table("sources").select("id", count="exact").eq("knowledge_space_id", knowledge_space_id).execute()
@@ -119,6 +120,10 @@ async def create_source_from_file(
         source_type = "pdf"
     elif ext in ("docx", "doc"):
         source_type = "docx"
+    elif ext == "csv":
+        source_type = "csv"
+    elif ext in ("jpg", "jpeg", "png"):
+        source_type = ext # The ingestion pipeline handles ['jpg', 'jpeg', 'png'] directly
     else:
         # Accept any other file extension generically
         source_type = ext if ext else "unknown"
@@ -136,7 +141,7 @@ async def create_source_from_file(
             file_options={"content-type": file.content_type or "application/octet-stream"},
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+        raise ExternalServiceError(f"Failed to upload file: {str(e)}")
 
     data = {
         "id": source_id,
@@ -151,7 +156,7 @@ async def create_source_from_file(
     result = supabase.table("sources").insert(data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create source")
+        raise DatabaseError("Failed to create source")
 
     # Kick off ingestion in the background
     background_tasks.add_task(
@@ -189,13 +194,13 @@ async def get_source_status(
     )
 
     if not result.data:
-        raise HTTPException(status_code=404, detail="Source not found")
+        raise ResourceNotFoundError("Source not found")
 
     row = result.data[0]
 
     # Verify ownership through the knowledge space
     if row.get("knowledge_spaces", {}).get("user_id") != user_id:
-        raise HTTPException(status_code=404, detail="Source not found")
+        raise ResourceNotFoundError("Source not found")
 
     return SourceStatusResponse(
         id=row["id"],
@@ -221,11 +226,11 @@ async def delete_source(
     )
 
     if not result.data:
-        raise HTTPException(status_code=404, detail="Source not found")
+        raise ResourceNotFoundError("Source not found")
 
     row = result.data[0]
     if row.get("knowledge_spaces", {}).get("user_id") != user_id:
-        raise HTTPException(status_code=404, detail="Source not found")
+        raise ResourceNotFoundError("Source not found")
 
     # Delete data (Chroma & Storage)
     delete_source_data(

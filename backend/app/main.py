@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.routers import knowledge_spaces, sources, conversations
+from app.exceptions import AppException, app_exception_handler, global_exception_handler
 
 # Create the FastAPI app
 app = FastAPI(
@@ -18,6 +19,10 @@ app = FastAPI(
     description="Multi-source RAG knowledge assistant with agentic chat",
     version="1.0.0",
 )
+
+# Register Exception Handlers
+app.add_exception_handler(AppException, app_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
 
 # Configure CORS
 settings = get_settings()

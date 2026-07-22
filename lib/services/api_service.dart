@@ -4,6 +4,10 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'dart:io';
+import 'dart:async';
+
+
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
@@ -36,7 +40,11 @@ class ApiService {
       String message;
       try {
         final body = jsonDecode(response.body);
-        message = body['detail'] ?? 'Request failed';
+        if (body['error'] != null && body['error']['message'] != null) {
+          message = body['error']['message'];
+        } else {
+          message = body['detail'] ?? 'Request failed';
+        }
       } catch (_) {
         message = 'Request failed with status ${response.statusCode}';
       }
@@ -44,47 +52,59 @@ class ApiService {
     }
   }
 
+  Future<http.Response> _execute(Future<http.Response> Function() requestFunc) async {
+    try {
+      final response = await requestFunc().timeout(const Duration(seconds: 60));
+      _handleError(response);
+      return response;
+    } on SocketException catch (_) {
+      throw ApiException('Network error: Please check your internet connection.', 0);
+    } on TimeoutException catch (_) {
+      throw ApiException('Request timed out. Please try again.', 408);
+    } on http.ClientException catch (e) {
+      throw ApiException('Client error: ${e.message}', 0);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('An unexpected error occurred: $e', 0);
+    }
+  }
+
   // ─── Knowledge Spaces ───────────────────────────────────────
 
   /// Create a new knowledge space
   Future<KnowledgeSpace> createKnowledgeSpace(String name) async {
-    final response = await http.post(
+    final response = await _execute(() => http.post(
       Uri.parse('$baseUrl/knowledge-spaces'),
       headers: _headers,
       body: jsonEncode({'name': name}),
-    );
-    _handleError(response);
+    ));
     return KnowledgeSpace.fromJson(jsonDecode(response.body));
   }
 
   /// List all knowledge spaces
   Future<List<KnowledgeSpace>> listKnowledgeSpaces() async {
-    final response = await http.get(
+    final response = await _execute(() => http.get(
       Uri.parse('$baseUrl/knowledge-spaces'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
     final List<dynamic> data = jsonDecode(response.body);
     return data.map((e) => KnowledgeSpace.fromJson(e)).toList();
   }
 
   /// Get a knowledge space with its sources
   Future<Map<String, dynamic>> getKnowledgeSpace(String id) async {
-    final response = await http.get(
+    final response = await _execute(() => http.get(
       Uri.parse('$baseUrl/knowledge-spaces/$id'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
     return jsonDecode(response.body);
   }
 
-  /// Delete a knowledge space
   Future<void> deleteKnowledgeSpace(String id) async {
-    final response = await http.delete(
+    await _execute(() => http.delete(
       Uri.parse('$baseUrl/knowledge-spaces/$id'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
   }
 
   // ─── Sources ────────────────────────────────────────────────
@@ -96,7 +116,7 @@ class ApiService {
     required String sourceUrl,
     String? originalName,
   }) async {
-    final response = await http.post(
+    final response = await _execute(() => http.post(
       Uri.parse('$baseUrl/sources'),
       headers: _headers,
       body: jsonEncode({
@@ -105,8 +125,7 @@ class ApiService {
         'source_url': sourceUrl,
         'original_name': originalName,
       }),
-    );
-    _handleError(response);
+    ));
     return Source.fromJson(jsonDecode(response.body));
   }
 
@@ -141,11 +160,10 @@ class ApiService {
 
   /// Poll source ingestion status
   Future<Source> getSourceStatus(String sourceId) async {
-    final response = await http.get(
+    final response = await _execute(() => http.get(
       Uri.parse('$baseUrl/sources/$sourceId/status'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
     final data = jsonDecode(response.body);
     // The status endpoint returns a partial source, fill in missing fields
     return Source(
@@ -159,55 +177,50 @@ class ApiService {
     );
   }
   Future<void> deleteSource(String sourceId) async {
-    final response = await http.delete(
+    await _execute(() => http.delete(
       Uri.parse('$baseUrl/sources/$sourceId'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
   }
 
   // ─── Conversations ───────────────────────────────────────────
 
   /// Create a new conversation
   Future<Conversation> createConversation(String spaceId, {String name = "New Conversation"}) async {
-    final response = await http.post(
+    final response = await _execute(() => http.post(
       Uri.parse('$baseUrl/knowledge-spaces/$spaceId/conversations'),
       headers: _headers,
       body: jsonEncode({'name': name}),
-    );
-    _handleError(response);
+    ));
     return Conversation.fromJson(jsonDecode(response.body));
   }
 
   /// List conversations for a space
   Future<List<Conversation>> listConversations(String spaceId) async {
-    final response = await http.get(
+    final response = await _execute(() => http.get(
       Uri.parse('$baseUrl/knowledge-spaces/$spaceId/conversations'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
     final List<dynamic> data = jsonDecode(response.body);
     return data.map((e) => Conversation.fromJson(e)).toList();
   }
 
   /// Update conversation name
   Future<Conversation> updateConversation(String conversationId, String name) async {
-    final response = await http.patch(
+    final response = await _execute(() => http.patch(
       Uri.parse('$baseUrl/conversations/$conversationId'),
       headers: _headers,
       body: jsonEncode({'name': name}),
-    );
-    _handleError(response);
+    ));
     return Conversation.fromJson(jsonDecode(response.body));
   }
 
   /// Delete a conversation
   Future<void> deleteConversation(String conversationId) async {
-    final response = await http.delete(
+    await _execute(() => http.delete(
       Uri.parse('$baseUrl/conversations/$conversationId'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
   }
 
   // ─── Chat ───────────────────────────────────────────────────
@@ -217,35 +230,32 @@ class ApiService {
     required String conversationId,
     required String message,
   }) async {
-    final response = await http.post(
+    final response = await _execute(() => http.post(
       Uri.parse('$baseUrl/conversations/$conversationId/chat'),
       headers: _headers,
       body: jsonEncode({
         'message': message,
       }),
-    );
-    _handleError(response);
+    ));
     return jsonDecode(response.body);
   }
 
   /// Get chat history for a conversation
   Future<List<Message>> getChatHistory(String conversationId) async {
-    final response = await http.get(
+    final response = await _execute(() => http.get(
       Uri.parse('$baseUrl/conversations/$conversationId/messages'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
     final List<dynamic> data = jsonDecode(response.body);
     return data.map((e) => Message.fromJson(e)).toList();
   }
 
   /// Export a message as a PDF
   Future<String> exportMessagePdf(String messageId) async {
-    final response = await http.post(
+    final response = await _execute(() => http.post(
       Uri.parse('$baseUrl/messages/$messageId/export-pdf'),
       headers: _headers,
-    );
-    _handleError(response);
+    ));
     return jsonDecode(response.body)['url'] as String;
   }
 }

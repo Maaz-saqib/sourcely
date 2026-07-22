@@ -41,7 +41,7 @@ class SpacesProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to load knowledge spaces';
+      _errorMessage = e is ApiException ? e.message : 'Failed to load knowledge spaces';
       _isLoading = false;
       notifyListeners();
     }
@@ -65,7 +65,7 @@ class SpacesProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     } catch (e) {
-      _errorMessage = 'Failed to create knowledge space';
+      _errorMessage = e is ApiException ? e.message : 'Failed to create knowledge space';
       _isLoading = false;
       notifyListeners();
       return null;
@@ -84,7 +84,7 @@ class SpacesProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to delete knowledge space';
+      _errorMessage = e is ApiException ? e.message : 'Failed to delete knowledge space';
       notifyListeners();
       return false;
     }
@@ -112,7 +112,7 @@ class SpacesProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to load knowledge space';
+      _errorMessage = e is ApiException ? e.message : 'Failed to load knowledge space';
       _isLoading = false;
       notifyListeners();
     }
@@ -142,7 +142,7 @@ class SpacesProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     } catch (e) {
-      _errorMessage = 'Failed to add source';
+      _errorMessage = e is ApiException ? e.message : 'Failed to add source';
       notifyListeners();
       return null;
     }
@@ -172,7 +172,7 @@ class SpacesProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     } catch (e) {
-      _errorMessage = 'Failed to upload file';
+      _errorMessage = e is ApiException ? e.message : 'Failed to upload file';
       notifyListeners();
       return null;
     }
@@ -213,7 +213,7 @@ class SpacesProvider extends ChangeNotifier {
       _errorMessage = e.message;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to delete source';
+      _errorMessage = e is ApiException ? e.message : 'Failed to delete source';
       notifyListeners();
     }
   }

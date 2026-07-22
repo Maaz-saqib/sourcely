@@ -87,10 +87,17 @@ class _SpaceScreenState extends State<SpaceScreen>
         for (final file in result.files) {
           if (file.bytes != null && mounted) {
             String mimeType = 'application/octet-stream';
-            if (file.extension == 'pdf') {
+            final ext = file.extension?.toLowerCase();
+            if (ext == 'pdf') {
               mimeType = 'application/pdf';
-            } else if (file.extension == 'docx' || file.extension == 'doc') {
+            } else if (ext == 'docx' || ext == 'doc') {
               mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            } else if (ext == 'csv') {
+              mimeType = 'text/csv';
+            } else if (ext == 'jpg' || ext == 'jpeg') {
+              mimeType = 'image/jpeg';
+            } else if (ext == 'png') {
+              mimeType = 'image/png';
             }
 
             await context.read<SpacesProvider>().uploadFileSource(

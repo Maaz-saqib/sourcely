@@ -13,6 +13,7 @@ import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from langchain_core.documents import Document
 
 from app.config import get_settings
 from app.database import get_supabase_client
@@ -59,7 +60,8 @@ def _load_docx(file_path: str):
 def extract_youtube_video_id(url: str) -> Optional[str]:
     """Extract 11-character YouTube video ID from any valid YouTube URL format."""
     import re
-    pattern = r'(?:v=|\/|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})'
+
+    pattern = r"(?:v=|\/|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})"
     match = re.search(pattern, url)
     return match.group(1) if match else None
 
@@ -77,17 +79,25 @@ def _load_youtube(url: str):
     if video_id:
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
+
             api = YouTubeTranscriptApi()
             transcript_list = api.list_transcripts(video_id)
             try:
-                transcript = transcript_list.find_transcript(['en', 'en-US', 'es', 'fr', 'de', 'hi'])
+                transcript = transcript_list.find_transcript(
+                    ["en", "en-US", "es", "fr", "de", "hi"]
+                )
             except Exception:
                 transcript = next(iter(transcript_list))
 
             fetched = transcript.fetch()
-            full_text = " ".join([item['text'] for item in fetched if 'text' in item])
+            full_text = " ".join([item["text"] for item in fetched if "text" in item])
             if full_text.strip():
-                return [Document(page_content=full_text, metadata={"source_url": url, "video_id": video_id})]
+                return [
+                    Document(
+                        page_content=full_text,
+                        metadata={"source_url": url, "video_id": video_id},
+                    )
+                ]
         except Exception as e:
             print(f"Direct youtube_transcript_api failed for video ID {video_id}: {e}")
 
@@ -95,15 +105,23 @@ def _load_youtube(url: str):
     if video_id:
         try:
             import yt_dlp
-            ydl_opts = {'skip_download': True, 'quiet': True}
+
+            ydl_opts = {"skip_download": True, "quiet": True}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
-                title = info.get('title', '')
-                description = info.get('description', '')
-                uploader = info.get('uploader', '')
+                info = ydl.extract_info(
+                    f"https://www.youtube.com/watch?v={video_id}", download=False
+                )
+                title = info.get("title", "")
+                description = info.get("description", "")
+                uploader = info.get("uploader", "")
                 content = f"YouTube Video Title: {title}\nChannel: {uploader}\n\nDescription:\n{description}"
                 if title or description:
-                    return [Document(page_content=content, metadata={"source_url": url, "video_id": video_id})]
+                    return [
+                        Document(
+                            page_content=content,
+                            metadata={"source_url": url, "video_id": video_id},
+                        )
+                    ]
         except Exception as e:
             print(f"yt-dlp extraction failed for video ID {video_id}: {e}")
 
@@ -111,7 +129,10 @@ def _load_youtube(url: str):
     print("Falling back to web page scraping for YouTube URL...")
     docs = _load_url(url)
     if docs:
-        docs[0].page_content = "Note: Ingested YouTube video page metadata/description.\n\n" + docs[0].page_content
+        docs[0].page_content = (
+            "Note: Ingested YouTube video page metadata/description.\n\n"
+            + docs[0].page_content
+        )
     return docs
 
 
@@ -134,6 +155,33 @@ def _download_from_supabase(storage_path: str) -> str:
     temp_file.write(file_data)
     temp_file.close()
     return temp_file.name
+
+
+def _load_csv(file_path: str):
+    """Load CSV content."""
+    from langchain_community.document_loaders.csv_loader import CSVLoader
+
+    loader = CSVLoader(file_path=file_path)
+    return loader.load()
+
+
+def _load_image(file_path: str):
+    """Load Image content by extracting text with local EasyOCR."""
+    import easyocr
+    from langchain_core.documents import Document
+    
+    # Initialize the reader (downloads model on first run if missing)
+    # Using CPU (gpu=False) to ensure it runs on any environment
+    reader = easyocr.Reader(['en'], gpu=False)
+    
+    # Extract text
+    result = reader.readtext(file_path, detail=0, paragraph=True)
+    
+    extracted_text = "\n".join(result)
+    if not extracted_text.strip():
+        extracted_text = "No text could be extracted from this image."
+        
+    return [Document(page_content=extracted_text, metadata={"source": file_path})]
 
 
 def run_ingestion_pipeline(
@@ -167,15 +215,24 @@ def run_ingestion_pipeline(
             documents = _load_youtube(source_url)
         elif source_type == "url":
             documents = _load_url(source_url)
+        elif source_type == "csv":
+            temp_file_path = _download_from_supabase(storage_path)
+            documents = _load_csv(temp_file_path)
+        elif source_type in ["jpg", "jpeg", "png"]:
+            temp_file_path = _download_from_supabase(storage_path)
+            documents = _load_image(temp_file_path)
         else:
             # Fallback for all other generic file types (txt, csv, json, md, etc)
             from langchain_community.document_loaders import TextLoader
+
             temp_file_path = _download_from_supabase(storage_path)
             try:
                 loader = TextLoader(temp_file_path, autodetect_encoding=True)
                 documents = loader.load()
             except Exception as e:
-                raise ValueError(f"Failed to extract text from {source_type} file: {str(e)}")
+                raise ValueError(
+                    f"Failed to extract text from {source_type} file: {str(e)}"
+                )
 
         if not documents:
             raise ValueError("No content could be extracted from the source")
@@ -223,12 +280,15 @@ def run_ingestion_pipeline(
     except Exception as e:
         # Update source status to failed
         error_msg = f"{str(e)}\n{traceback.format_exc()}"
-        supabase.table("sources").update(
-            {
-                "status": "failed",
-                "error_message": error_msg[:2000],  # Truncate long errors
-            }
-        ).eq("id", source_id).execute()
+        try:
+            supabase.table("sources").update(
+                {
+                    "status": "failed",
+                    "error_message": error_msg[:2000],  # Truncate long errors
+                }
+            ).eq("id", source_id).execute()
+        except Exception as db_e:
+            print(f"CRITICAL: Failed to update DB after ingestion error: {db_e}")
 
     finally:
         # Clean up temp file
@@ -236,7 +296,12 @@ def run_ingestion_pipeline(
             os.unlink(temp_file_path)
 
 
-def delete_source_data(source_id: str, knowledge_space_id: str, chunk_count: int, storage_path: Optional[str] = None):
+def delete_source_data(
+    source_id: str,
+    knowledge_space_id: str,
+    chunk_count: int,
+    storage_path: Optional[str] = None,
+):
     """
     Deletes the source chunks from ChromaDB and the raw file from Supabase Storage.
     """
@@ -244,11 +309,10 @@ def delete_source_data(source_id: str, knowledge_space_id: str, chunk_count: int
     try:
         if storage_path:
             supabase.storage.from_("source-files").remove([storage_path])
-        
+
         if chunk_count and chunk_count > 0:
             vectorstore = _get_chroma_collection(knowledge_space_id)
             ids_to_delete = [f"{source_id}_chunk_{i}" for i in range(chunk_count)]
             vectorstore.delete(ids=ids_to_delete)
     except Exception as e:
         print(f"Error deleting source data: {e}")
-

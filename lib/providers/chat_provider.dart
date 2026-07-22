@@ -50,7 +50,7 @@ class ChatProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to load conversations';
+      _errorMessage = e is ApiException ? e.message : 'Failed to load conversations';
       _isLoading = false;
       notifyListeners();
     }
@@ -82,7 +82,7 @@ class ChatProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to load chat history';
+      _errorMessage = e is ApiException ? e.message : 'Failed to load chat history';
       _isLoading = false;
       notifyListeners();
     }
@@ -104,7 +104,7 @@ class ChatProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to create conversation';
+      _errorMessage = e is ApiException ? e.message : 'Failed to create conversation';
       _isLoading = false;
       notifyListeners();
     }
@@ -124,7 +124,7 @@ class ChatProvider extends ChangeNotifier {
       }
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to rename conversation';
+      _errorMessage = e is ApiException ? e.message : 'Failed to rename conversation';
       notifyListeners();
       return false;
     }
@@ -147,7 +147,7 @@ class ChatProvider extends ChangeNotifier {
       }
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to delete conversation';
+      _errorMessage = e is ApiException ? e.message : 'Failed to delete conversation';
       notifyListeners();
       return false;
     }
@@ -167,7 +167,7 @@ class ChatProvider extends ChangeNotifier {
         _conversations.insert(0, newConvo);
         _currentConversation = newConvo;
       } catch (e) {
-        _errorMessage = 'Failed to create conversation';
+        _errorMessage = e is ApiException ? e.message : 'Failed to create conversation';
         _isSending = false;
         notifyListeners();
         return false;
@@ -218,7 +218,7 @@ class ChatProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Failed to send message';
+      _errorMessage = e is ApiException ? e.message : 'Failed to send message';
       _messages.removeLast();
       _isSending = false;
       notifyListeners();
@@ -232,7 +232,7 @@ class ChatProvider extends ChangeNotifier {
       final url = await _apiService.exportMessagePdf(messageId);
       return url;
     } catch (e) {
-      _errorMessage = 'Failed to export to PDF';
+      _errorMessage = e is ApiException ? e.message : 'Failed to export to PDF';
       notifyListeners();
       return null;
     }
