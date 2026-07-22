@@ -131,5 +131,22 @@ Sourcely's AI is governed by strict system prompts to ensure a premium, predicta
 1. **Default Formatting**: Uses **Bold Titles** and clean paragraphs.
 2. **User Overrides**: When users request specific structures (e.g., "bullet points only"), the AI completely drops introductory filler and titles, delivering exact formats instantly.
 
+## 🧪 Testing
+
+Sourcely includes a comprehensive testing suite to ensure high code quality.
+
+- **Unit Tests**: Test core logic and models.
+  ```bash
+  flutter test test/models/
+  ```
+- **Widget Tests**: Test UI components in isolation (e.g., Loading shimmer).
+  ```bash
+  flutter test test/widgets/
+  ```
+- **App Integration Tests**: End-to-End widget tests with mocked providers to simulate app-wide rendering.
+  ```bash
+  flutter test test/app_test.dart
+  ```
+
 ---
 *Developed by Muhammad Maaz Saqib.*
