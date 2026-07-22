@@ -21,49 +21,7 @@ Whether you're analyzing resumes, summarizing YouTube videos, or extracting data
 
 The following flowchart illustrates how data moves through Sourcely, from the moment a user uploads a file to when the AI delivers an answer.
 
-```mermaid
-flowchart TD
-    %% Define Node Styles
-    classDef frontend fill:#02569B,stroke:#000,stroke-width:2px,color:#fff;
-    classDef backend fill:#009688,stroke:#000,stroke-width:2px,color:#fff;
-    classDef storage fill:#FF9800,stroke:#000,stroke-width:2px,color:#fff;
-    classDef ai fill:#673AB7,stroke:#000,stroke-width:2px,color:#fff;
-
-    %% Nodes
-    User([User interacts with App])
-    UI[Flutter Frontend\nUI & State Mgmt]:::frontend
-    Auth{Supabase Auth\nIs Logged In?}:::storage
-    
-    API[FastAPI Backend\nREST API]:::backend
-    Ingestion[Document Ingestion\nText Extraction & Chunking]:::backend
-    
-    SupabaseDB[(Supabase SQL\nMetadata & Links)]:::storage
-    ChromaDB[(ChromaDB\nVector Store)]:::storage
-    
-    LLM{LangChain Agent\nTool Calling}:::ai
-    Response([Formatted AI Response])
-
-    %% Flow
-    User -->|Uploads PDF, CSV, or URL| UI
-    UI -->|Checks Auth| Auth
-    Auth -- Yes --> API
-    Auth -- No --> UI
-    
-    API -->|1. Save Metadata| SupabaseDB
-    API -->|2. Kick off background task| Ingestion
-    
-    Ingestion -->|Extract text using PyPDF/OpenPyxl/YouTubeTranscriptApi| Ingestion
-    Ingestion -->|Create HuggingFace Embeddings| ChromaDB
-    
-    User -->|Sends Chat Message\n(Optionally @mentions sources)| UI
-    UI -->|POST /chat| API
-    API --> LLM
-    
-    LLM -->|Queries Vector DB\n(Filters by @mention if used)| ChromaDB
-    ChromaDB -->|Returns Context Snippets| LLM
-    LLM -->|Generates Answer based on System Prompt| Response
-    Response --> UI
-```
+![Architecture & Working Flow](architecture.png)
 
 ---
 
