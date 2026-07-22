@@ -67,11 +67,40 @@ class _SpaceScreenState extends State<SpaceScreen>
   }
 
   void _showAddSourceDialog() {
+    if (context.read<SpacesProvider>().currentSources.length >= 6) {
+      _showLimitReachedDialog();
+      return;
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => const AddSourceDialog(),
+    );
+  }
+
+  void _showLimitReachedDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Limit Reached'),
+          ],
+        ),
+        content: const Text(
+          'You have reached the maximum limit of 6 sources for this knowledge space.\n\n'
+          'To add a new source, please delete an existing one first.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -130,6 +159,11 @@ class _SpaceScreenState extends State<SpaceScreen>
   }
 
   Future<void> _handleFileUpload() async {
+    if (context.read<SpacesProvider>().currentSources.length >= 6) {
+      _showLimitReachedDialog();
+      return;
+    }
+
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -293,19 +327,55 @@ class _SourcesTab extends StatelessWidget {
 
         return Column(
           children: [
+            // Header with count
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Sources',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: provider.currentSources.length >= 6 
+                          ? Colors.orange.withValues(alpha: 0.2) 
+                          : SourcelyColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${provider.currentSources.length} / 6',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: provider.currentSources.length >= 6 
+                            ? Colors.orange 
+                            : SourcelyColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
             // Add source buttons
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [SourcelyColors.primary, SourcelyColors.primary]),
+                        gradient: LinearGradient(colors: [
+                          provider.currentSources.length >= 6 ? Colors.grey : SourcelyColors.primary, 
+                          provider.currentSources.length >= 6 ? Colors.grey : SourcelyColors.primary
+                        ]),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ElevatedButton.icon(
-                        onPressed: onUploadFile,
+                        onPressed: provider.currentSources.length >= 6 ? onUploadFile : onUploadFile, // Will trigger dialog
                         icon: const Icon(Icons.upload_file, color: Colors.white, size: 20),
                         label: const Text('Upload File',
                             style: TextStyle(color: Colors.white)),
