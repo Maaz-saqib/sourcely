@@ -4,6 +4,8 @@
 
 Whether you're analyzing resumes, summarizing YouTube videos, or extracting data from spreadsheets, Sourcely brings your documents to life through natural language conversation.
 
+**🌐 Live Demo:** [https://sourcely-lyart.vercel.app/](https://sourcely-lyart.vercel.app/)
+
 ---
 
 ## 🌟 Key Features
