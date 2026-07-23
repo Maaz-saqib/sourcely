@@ -6,7 +6,7 @@ class AppConstants {
 
   /// Backend API base URL
   /// Change this to your deployed backend URL in production
-  static const String apiBaseUrl = 'http://localhost:8000/api';
+  static const String apiBaseUrl = 'http://localhost:8001/api';
 
   /// Supabase configuration
   /// Replace these with your actual Supabase project values
